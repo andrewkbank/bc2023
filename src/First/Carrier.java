@@ -10,11 +10,13 @@ public class Carrier extends Robot {
   private static boolean first_turn;
   private static MapLocation goal;
 
-  public Carrier() {
+  public Carrier(RobotController rc) throws GameActionException {
+    super(rc);
     first_turn = true;
   }
 
   public void run(RobotController rc) throws GameActionException {
+    updatePersonalMap(rc);
     if (first_turn) {
       start = rc.getLocation();
       well_found = false;

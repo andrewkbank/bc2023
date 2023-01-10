@@ -1,5 +1,7 @@
 package First;
 
+import javax.lang.model.util.ElementScanner6;
+
 import battlecode.common.*;
 
 /*
@@ -13,6 +15,28 @@ import battlecode.common.*;
  * should be in the subclass
  */
 public abstract class Robot {
+  /*  map format
+   *  0 = unknown
+   *  1 = tempest (unpassable)
+   *  2 = no current
+   *  3 = current north
+   *  4 = current northeast
+   *  5 = current east
+   *  6 = current southeast
+   *  7 = current south
+   *  8 = current southwest
+   *  9 = current west
+   *  10 = current northwest
+   */
+  private int[] map;
+  private MapLocation loc;
+  public Robot(RobotController rc) throws GameActionException{
+    //initialize map on robot creation
+    map=new int[rc.getMapHeight()*rc.getMapWidth()];
+    loc=rc.getLocation();
+  }
+
+
   // Every subclass must define their own run function.
   public abstract void run(RobotController rc) throws GameActionException;
 
@@ -39,5 +63,107 @@ public abstract class Robot {
       --i; //i makes sure it doesn't infinite loop
     }
     return dirToDestination;
+  }
+
+  //returns a list of MapLocations that make up the edge of the robot's vision (assumes 20 vision)
+  private MapLocation[] getEdgeMapLocations(RobotController rc,Direction dir) throws GameActionException{
+    Direction twoLeft=dir.rotateLeft().rotateLeft();
+    Direction twoRight=dir.rotateRight().rotateRight();
+    Direction threeLeft=dir.rotateLeft().rotateLeft().rotateLeft();
+    Direction threeRight=dir.rotateRight().rotateRight().rotateRight();
+    MapLocation center=rc.getLocation();
+    if(dir.dx*dir.dx+dir.dy*dir.dy==2){//diagonal
+      center=center.add(dir).add(dir).add(dir);
+      MapLocation[] edge=new MapLocation[11];
+      edge[0]=center;
+      edge[1]=center.add(threeLeft);
+      edge[2]=center.add(threeRight);
+      edge[3]=edge[1].add(twoLeft);
+      edge[4]=edge[2].add(twoRight);
+      edge[5]=edge[3].add(threeLeft);
+      edge[6]=edge[4].add(threeRight);
+      edge[7]=edge[5].add(threeLeft);
+      edge[8]=edge[6].add(threeRight);
+      edge[9]=edge[7].add(threeLeft);
+      edge[10]=edge[8].add(threeRight);
+      return edge;
+    }else{//cardinal
+      center=center.add(dir).add(dir).add(dir).add(dir);
+      MapLocation[] edge=new MapLocation[9];
+      edge[0]=center;
+      edge[1]=center.add(twoLeft);
+      edge[2]=center.add(twoRight);
+      edge[3]=edge[1].add(twoLeft);
+      edge[4]=edge[2].add(twoRight);
+      edge[5]=edge[3].add(threeLeft);
+      edge[6]=edge[4].add(threeRight);
+      edge[7]=edge[5].add(threeLeft);
+      edge[8]=edge[6].add(threeRight);
+      return edge;
+    }
+  }
+
+  //careful, this crashes the client (overflows the heap)
+  public void printMap(RobotController rc) throws GameActionException{
+    rc.setIndicatorString("printing...");
+    for(int i=0;i<rc.getMapHeight();++i){
+      for(int j=0;j<rc.getMapWidth();++j){
+        MapLocation m=new MapLocation(i,j);
+        switch(map[i*rc.getMapWidth()+j]){
+          case 0: rc.setIndicatorDot(m,0,0,100); break;
+          case 1: rc.setIndicatorDot(m,100,0,0); break;
+          case 2: rc.setIndicatorDot(m,0,100,0); break;
+          case 3: rc.setIndicatorDot(m,0,100,0); break;
+          case 4: rc.setIndicatorDot(m,0,100,0); break;
+          case 5: rc.setIndicatorDot(m,0,100,0); break;
+          case 6: rc.setIndicatorDot(m,0,100,0); break;
+          case 7: rc.setIndicatorDot(m,0,100,0); break;
+          case 8: rc.setIndicatorDot(m,0,100,0); break;
+          case 9: rc.setIndicatorDot(m,0,100,0); break;
+          case 10: rc.setIndicatorDot(m,0,100,0); break;
+        }
+      }
+    }
+    rc.setIndicatorString("done printing");
+  }
+  
+  public void updatePersonalMap(RobotController rc) throws GameActionException{
+    MapLocation newLocation=rc.getLocation();
+    Direction dirMoved=loc.directionTo(newLocation);
+    rc.setIndicatorString("@Robot.java->updatePersonalMap moved: "+dirMoved);
+    if(dirMoved!=Direction.CENTER){
+      MapLocation[] visibleLocations=getEdgeMapLocations(rc, dirMoved);
+      for(int i=0;i<visibleLocations.length;++i){ //go through all visible locations
+        if(rc.canSenseLocation(visibleLocations[i])&&rc.onTheMap(visibleLocations[i])){ //filter out ones not on the map
+          rc.setIndicatorDot(visibleLocations[i],0,0,100);
+          int setMap=0;
+          if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
+            setMap=1;
+          }else{ //empty squares or currents
+            setMap=2;
+            MapInfo currentInfo=rc.senseMapInfo(visibleLocations[i]);
+            Direction current=currentInfo.getCurrentDirection();
+            //switch-case every direction
+            switch(current){
+              case NORTH: setMap=3; break;
+              case NORTHEAST: setMap=4; break;
+              case EAST: setMap=5; break;
+              case SOUTHEAST: setMap=6; break;
+              case SOUTH: setMap=7; break;
+              case SOUTHWEST: setMap=8; break;
+              case WEST: setMap=9; break;
+              case NORTHWEST: setMap=10; break;
+            }
+          }
+          //if(setMap!=map[visibleLocations[i].x*rc.getMapWidth()+visibleLocations[i].y]){
+            map[visibleLocations[i].x*rc.getMapWidth()+visibleLocations[i].y]=setMap;
+          //}
+        }
+      }
+    }
+    loc=rc.getLocation();
+  }
+  public void updateGlobalMap(RobotController rc) throws GameActionException{
+
   }
 }

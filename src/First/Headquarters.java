@@ -16,7 +16,10 @@ public class Headquarters extends Robot {
   };
   static final Random rng = new Random(6147);
 
+  public Headquarters(RobotController rc) throws GameActionException{
+    super(rc);
 
+  }
   public void run(RobotController rc) throws GameActionException {
     //todo: anchors
     // Pick a direction to build in.
@@ -26,6 +29,9 @@ public class Headquarters extends Robot {
     rc.setIndicatorString("Trying to build a carrier");
     if (rc.canBuildRobot(RobotType.CARRIER, newLoc)) {
         rc.buildRobot(RobotType.CARRIER, newLoc);
+    }
+    for(int i=0;i<100;++i){
+      MapLocation m=new MapLocation(i,i);
     }
   }
 }
