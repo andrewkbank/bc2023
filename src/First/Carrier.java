@@ -29,7 +29,10 @@ public class Carrier extends Robot {
     }
 
     if (well_found) {
-      rc.move(pathfind(rc, goal));
+      Direction go=pathfind(rc,goal);
+      if(rc.canMove(go)){
+        rc.move(go);
+      }
     } else {
       if (rc.canMove(start.directionTo(rc.getLocation()))) {
         rc.move(start.directionTo(rc.getLocation()));
