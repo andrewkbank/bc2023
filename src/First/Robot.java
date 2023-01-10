@@ -16,20 +16,19 @@ public abstract class Robot {
   // Every subclass must define their own run function.
   public abstract void run(RobotController rc) throws GameActionException;
 
-  public MapLocation getClosest(RobotController rc, MapLocation[] locs) throws GameActionException {
-    assert(locs.length > 0);
-    MapLocation closest = locs[0];
-    for (int i = 0; i < locs.length; i++) {
-      if (locs[i].distanceSquaredTo(rc.getLocation()) < closest.distanceSquaredTo(rc.getLocation())) {
-        closest = locs[i];
+  public MapLocation getClosest(RobotController rc, WellInfo[] wells) throws GameActionException {
+    assert(wells.length > 0);
+    MapLocation closest = wells[0].getMapLocation();
+    for (int i = 1; i < wells.length; i++) {
+      if (wells[i].getMapLocation().distanceSquaredTo(rc.getLocation()) < closest.distanceSquaredTo(rc.getLocation())) {
+        closest = wells[i].getMapLocation();
       }
     }
     return closest;
   }
-  
-  //dumbass version
-  public Direction pathfinding(RobotController rc, MapLocation destination) throws GameActionException{
-    Direction dirToDestination=rc.getLocation().directionTo(destination);
+
+  public Direction pathfind(RobotController rc, MapLocation goal) throws GameActionException {
+    Direction dirToDestination=rc.getLocation().directionTo(goal);
     int i=3;
     while(!rc.canMove(dirToDestination)&&i>0){
       if(rc.getRoundNum()%2==0){//roundnum serves as rng (hopefully)
