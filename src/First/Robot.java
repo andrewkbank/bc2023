@@ -15,4 +15,15 @@ import battlecode.common.*;
 public abstract class Robot {
   // Every subclass must define their own run function.
   public abstract void run(RobotController rc) throws GameActionException;
+
+  public MapLocation getClosest(RobotController rc, MapLocation[] locs) throws GameActionException {
+    assert(locs.length > 0);
+    MapLocation closest = locs[0];
+    for (int i = 0; i < locs.length; i++) {
+      if (locs[i].distanceSquaredTo(rc.getLocation()) < closest.distanceSquaredTo(rc.getLocation())) {
+        closest = locs[i];
+      }
+    }
+    return closest;
+  }
 }
