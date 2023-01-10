@@ -37,4 +37,8 @@ public abstract class Robot {
     }
     return closest;
   }
+
+  public Direction pathfind(RobotController rc, MapLocation goal) throws GameActionException {
+    
+  }
 }
