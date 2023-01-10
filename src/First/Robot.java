@@ -19,9 +19,20 @@ public abstract class Robot {
   public MapLocation getClosest(RobotController rc, MapLocation[] locs) throws GameActionException {
     assert(locs.length > 0);
     MapLocation closest = locs[0];
-    for (int i = 0; i < locs.length; i++) {
+    for (int i = 1; i < locs.length; i++) {
       if (locs[i].distanceSquaredTo(rc.getLocation()) < closest.distanceSquaredTo(rc.getLocation())) {
         closest = locs[i];
+      }
+    }
+    return closest;
+  }
+
+  public MapLocation getClosest(RobotController rc, WellInfo[] wells) throws GameActionException {
+    assert(wells.length > 0);
+    MapLocation closest = wells[0].getMapLocation();
+    for (int i = 1; i < wells.length; i++) {
+      if (wells[i].getMapLocation().distanceSquaredTo(rc.getLocation()) < closest.distanceSquaredTo(rc.getLocation())) {
+        closest = wells[i].getMapLocation();
       }
     }
     return closest;
