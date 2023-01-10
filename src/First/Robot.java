@@ -26,4 +26,19 @@ public abstract class Robot {
     }
     return closest;
   }
+  
+  //dumbass version
+  public Direction pathfinding(RobotController rc, MapLocation destination) throws GameActionException{
+    Direction dirToDestination=rc.getLocation().directionTo(destination);
+    int i=3;
+    while(!rc.canMove(dirToDestination)&&i>0){
+      if(rc.getRoundNum()%2==0){//roundnum serves as rng (hopefully)
+        dirToDestination=dirToDestination.rotateLeft();
+      }else{
+        dirToDestination=dirToDestination.rotateRight();
+      }
+      --i; //i makes sure it doesn't infinite loop
+    }
+    return dirToDestination;
+  }
 }
