@@ -6,41 +6,47 @@ public class Carrier extends Robot {
 
   private static boolean well_found;
   private static WellInfo[] nearby_wells;
+  private static WellInfo goal;
+  private static MapLocation goal_loc;
   private static MapLocation start;
-  private static boolean first_turn;
-  private static MapLocation goal;
 
   public Carrier(RobotController rc) throws GameActionException {
     super(rc);
-    first_turn = true;
+    start = rc.getLocation();
+    well_found = false;
   }
 
   public void run(RobotController rc) throws GameActionException {
     updatePersonalMap(rc);
-    if (first_turn) {
-      start = rc.getLocation();
-      well_found = false;
-
-      first_turn = false;
-    }
     
     if (!well_found) {
       nearby_wells = rc.senseNearbyWells();
       well_found = (nearby_wells.length > 0) ? true : false;
-      if (well_found) goal = getClosest(rc, nearby_wells);
+      if (well_found) {
+        goal = getClosest(rc, nearby_wells);
+        goal_loc = goal.getMapLocation();
+      }
     }
-
+    
+    Direction go;
     if (well_found) {
-      Direction go=pathfind(rc,goal);
-      if(rc.canMove(go)){
-        rc.move(go);
+      if (rc.getResourceAmount(goal.getResourceType()) < 0.5*GameConstants.CARRIER_CAPACITY) {
+        if (rc.getLocation().isAdjacentTo(goal_loc) && rc.canCollectResource(goal_loc, -1)) {
+          rc.collectResource(goal_loc, -1);
+        }
+        go = pathfind(rc, goal_loc);
+      } else { // COLLECTED 50% RESOURCES
+        if (rc.getLocation().isAdjacentTo(hqInfo.location) && rc.canTransferResource(hqInfo.location, goal.getResourceType(), rc.getResourceAmount(goal.getResourceType()))) {
+          rc.transferResource(hqInfo.location, goal.getResourceType(), rc.getResourceAmount(goal.getResourceType()));
+        }
+        go = pathfind(rc, start);
       }
     } else {
-      if (rc.canMove(start.directionTo(rc.getLocation()))) {
-        rc.move(start.directionTo(rc.getLocation()));
-      } else {
-        // Move random direction idk ill figure this out later im sleepy
-      }
+      go=start.directionTo(rc.getLocation());
+    }
+
+    if(rc.canMove(go)){
+      rc.move(go);
     }
   }
 }

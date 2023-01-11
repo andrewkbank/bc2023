@@ -30,6 +30,7 @@ public abstract class Robot {
    */
   private int[] map;
   private MapLocation loc;
+  protected RobotInfo hqInfo;
   static final Direction[] directions = {
     Direction.NORTH,
     Direction.NORTHEAST,
@@ -44,18 +45,27 @@ public abstract class Robot {
     //initialize map on robot creation
     map=new int[rc.getMapHeight()*rc.getMapWidth()];
     loc=rc.getLocation();
+    RobotInfo[] robots = rc.senseNearbyRobots();
+    if (robots.length == 0) {
+      hqInfo = rc.senseRobot(rc.getID());
+    } else {
+      hqInfo = robots[0];
+      for (RobotInfo r : robots) {
+        if (r.type == RobotType.HEADQUARTERS) { hqInfo = r; break; }
+      }
+    }
   }
 
 
   // Every subclass must define their own run function.
   public abstract void run(RobotController rc) throws GameActionException;
 
-  public MapLocation getClosest(RobotController rc, WellInfo[] wells) throws GameActionException {
+  public WellInfo getClosest(RobotController rc, WellInfo[] wells) throws GameActionException {
     assert(wells.length > 0);
-    MapLocation closest = wells[0].getMapLocation();
+    WellInfo closest = wells[0];
     for (int i = 1; i < wells.length; i++) {
-      if (wells[i].getMapLocation().distanceSquaredTo(rc.getLocation()) < closest.distanceSquaredTo(rc.getLocation())) {
-        closest = wells[i].getMapLocation();
+      if (wells[i].getMapLocation().distanceSquaredTo(rc.getLocation()) < closest.getMapLocation().distanceSquaredTo(rc.getLocation())) {
+        closest = wells[i];
       }
     }
     return closest;
