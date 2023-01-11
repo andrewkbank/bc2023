@@ -1,6 +1,6 @@
 ##### OTHERS #####
 /.vscode
-gradle.properties
+/gradle.properties
 
 ###### BATTLECODE ######
 
