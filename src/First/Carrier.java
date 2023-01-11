@@ -45,6 +45,12 @@ public class Carrier extends Robot {
 
     if(rc.canMove(go)){
       rc.move(go);
+    } else if (rc.canMove(go.rotateRight())) {
+      rc.move(go.rotateRight());
+    } else if (rc.canMove(go.rotateLeft())) {
+      rc.move(go.rotateLeft());
+    } else if (rc.canMove(go.opposite())) {
+      rc.move(go.opposite());
     }
   }
 }
