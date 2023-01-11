@@ -226,7 +226,7 @@ public abstract class Robot {
   //takes up tons of bytecode
   //only meant to be used by Headquarters on turn 1
   public void updatePersonalMapFull(RobotController rc) throws GameActionException{
-    MapLocation[] visibleLocations=rc.getAllLocationsWithinRadiusSquared(rc.getLocation(),34);
+    MapLocation[] visibleLocations=rc.getAllLocationsWithinRadiusSquared(rc.getLocation(),rc.getType().visionRadiusSquared);
     for(int i=0;i<visibleLocations.length;++i){ //go through all visible locations
       if(rc.canSenseLocation(visibleLocations[i])&&rc.onTheMap(visibleLocations[i])){ //filter out ones not on the map
         rc.setIndicatorDot(visibleLocations[i],0,0,100);
