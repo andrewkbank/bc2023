@@ -28,7 +28,7 @@ public abstract class Robot {
    *  9 = current west
    *  10 = current northwest
    */
-  private int[] map;
+  protected int[] map;
   private MapLocation loc;
   protected RobotInfo hqInfo;
   static final Direction[] directions = {
@@ -56,9 +56,25 @@ public abstract class Robot {
     }
   }
 
-
   // Every subclass must define their own run function.
   public abstract void run(RobotController rc) throws GameActionException;
+
+  public Direction makeDir(int dx, int dy) {
+    if (dx == -1) {
+      if (dy == -1)   { return Direction.SOUTHWEST; }
+      if (dy == 0)    { return Direction.WEST; }
+      if (dy == 1)    { return Direction.NORTHWEST; }
+    } else if (dx == 0) {
+      if (dy == -1)   { return Direction.SOUTH; }
+      if (dy == 0)    { return Direction.CENTER; }
+      if (dy == 1)    { return Direction.NORTH; }
+    } else if (dx == 1) {
+      if (dy == -1)   { return Direction.SOUTHEAST; }
+      if (dy == 0)    { return Direction.EAST; }
+      if (dy == 1)    { return Direction.NORTHEAST; }
+    }
+    return Direction.CENTER;
+  }
 
   public WellInfo getClosest(RobotController rc, WellInfo[] wells) throws GameActionException {
     assert(wells.length > 0);

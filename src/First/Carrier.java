@@ -40,7 +40,29 @@ public class Carrier extends Robot {
         go = pathfind(rc, hqInfo.location);
       }
     } else {
-      go=hqInfo.location.directionTo(rc.getLocation());
+      // Check if close to edge of map
+      int dx, dy;
+      if      (rc.getLocation().x < 4)                      { dx =  1; }
+      else if (rc.getMapWidth() - rc.getLocation().x < 4)   { dx = -1; }
+      else                                                  { dx =  0; }
+      if      (rc.getLocation().y < 4)                      { dy =  1; }
+      else if (rc.getMapHeight() - rc.getLocation().y < 4)  { dy = -1; }
+      else                                                  { dy =  0; }
+      if (dx != 0 || dy != 0) { go = makeDir(dx, dy); }
+      else { // Not close to edge of map
+        RobotInfo[] nearby = rc.senseNearbyRobots(-1, rc.getTeam());
+        // No other robots nearby, just go away from HQ
+        if (nearby.length == 0) { go = hqInfo.location.directionTo(rc.getLocation()); }
+        else {  // Robots nearby, run away from their average position
+          int avg_x = 0, avg_y = 0;
+          for (RobotInfo r : nearby) {
+            avg_x += r.getLocation().x;
+            avg_y += r.getLocation().y;
+          }
+          avg_x /= nearby.length; avg_y /= nearby.length;
+          go = new MapLocation(avg_x, avg_y).directionTo(rc.getLocation());
+        }
+      }
     }
 
     if(rc.canMove(go)){
