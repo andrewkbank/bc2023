@@ -21,9 +21,15 @@ public class Launcher extends Robot {
   public void run(RobotController rc) throws GameActionException {
     attack(rc);
 
-    Direction move=movement(rc);
-    if(rc.canMove(move)){
-      rc.move(move);
+    Direction go=movement(rc);
+    if(rc.canMove(go)){
+      rc.move(go);
+    } else if (rc.canMove(go.rotateRight())) {
+      rc.move(go.rotateRight());
+    } else if (rc.canMove(go.rotateLeft())) {
+      rc.move(go.rotateLeft());
+    } else if (rc.canMove(go.opposite())) {
+      rc.move(go.opposite());
     }
     //todo: later, make it able to run-n-gun (not just gun-n-run)
   }
@@ -89,6 +95,33 @@ public class Launcher extends Robot {
           if(index>=0){
             return rc.getLocation().directionTo(enemies[index].getLocation());
           }
+        }
+      }
+    } else {
+      // Check if close to edge of map
+      int dx, dy;
+      if      (rc.getLocation().x < 4)                      { dx =  1; }
+      else if (rc.getMapWidth() - rc.getLocation().x < 4)   { dx = -1; }
+      else                                                  { dx =  0; }
+      if      (rc.getLocation().y < 4)                      { dy =  1; }
+      else if (rc.getMapHeight() - rc.getLocation().y < 4)  { dy = -1; }
+      else                                                  { dy =  0; }
+      if (dx != 0 || dy != 0) { return makeDir(dx, dy); }
+      else { // Not close to edge of map
+        RobotInfo[] friends = rc.senseNearbyRobots(radius, rc.getTeam());
+        // No friends
+        if (friends.length == 0) { return hqInfo.location.directionTo(rc.getLocation()); }
+        // Not enough friends
+        else if (friends.length < 3) {
+          return rc.getLocation().directionTo(friends[0].location);
+        }
+        // Too many friends
+        else if (friends.length > 5) {
+          int avg_x = 0, avg_y = 0;
+          for (RobotInfo r : friends) {
+            avg_x += r.location.x; avg_y += r.location.y;
+          }
+          return new MapLocation(avg_x /= friends.length, avg_y /= friends.length).directionTo(rc.getLocation());
         }
       }
     }
