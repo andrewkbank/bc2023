@@ -15,13 +15,18 @@ public class Headquarters extends Robot {
     Direction.NORTHWEST,
   };
   static final Random rng = new Random(6147);
-
+  private static boolean first_turn;
   public Headquarters(RobotController rc) throws GameActionException{
     super(rc);
-
+    first_turn = true;
   }
   public void run(RobotController rc) throws GameActionException {
     //todo: anchors
+    if(first_turn){
+      updatePersonalMapFull(rc);
+      first_turn=false;
+    }
+
     // Pick a direction to build in.
     Direction dir = directions[rng.nextInt(directions.length)];
     MapLocation newLoc = rc.getLocation().add(dir);
