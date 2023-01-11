@@ -94,11 +94,10 @@ public abstract class Robot {
     stack.push(rc.getLocation());
     while(!stack.isEmpty()){  //while loop that runs dfs
       MapLocation m=stack.pop();
-      rc.setIndicatorString("Looking at "+m);
       if(discovered[m.y*rc.getMapWidth()+m.x]==0){
         discovered[m.y*rc.getMapWidth()+m.x]=1;
         Direction dirToGoal=rc.getLocation().directionTo(m);
-        Direction[] pushOrder={
+        Direction[] pushOrder={//this is the priority order that we add stuff to the dfs queue
           dirToGoal,
           dirToGoal.rotateRight(),
           dirToGoal.rotateLeft(),
@@ -109,14 +108,14 @@ public abstract class Robot {
           dirToGoal.opposite(),
 
         };
-        for(int i=0;i<8;++i){
+        for(int i=0;i<8;++i){//go through the priority order
           MapLocation toPush=m.add(pushOrder[i]);
           if(toPush.x>=0&&toPush.y>=0&&toPush.x<rc.getMapWidth()&&toPush.y<rc.getMapHeight()){//inbounds
             if(map[toPush.y*rc.getMapWidth()+toPush.x]!=1){//passable
-              if(toPush==goal){
+              if(toPush==goal){ //break if you find the destination
                 return pushOrder[i].opposite();
               }
-              stack.push(m.add(pushOrder[i]));
+              stack.push(m.add(pushOrder[i])); //and add them all to the stack
             }
           }
         }

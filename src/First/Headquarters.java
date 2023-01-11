@@ -22,7 +22,7 @@ public class Headquarters extends Robot {
   }
   public void run(RobotController rc) throws GameActionException {
     //todo: anchors
-    if(first_turn){
+    if(first_turn){//on the first turn look at the entire surrounding
       updatePersonalMapFull(rc);
       first_turn=false;
     }
