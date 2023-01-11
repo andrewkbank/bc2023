@@ -8,11 +8,9 @@ public class Carrier extends Robot {
   private static WellInfo[] nearby_wells;
   private static WellInfo goal;
   private static MapLocation goal_loc;
-  private static MapLocation start;
 
   public Carrier(RobotController rc) throws GameActionException {
     super(rc);
-    start = rc.getLocation();
     well_found = false;
   }
 
@@ -39,14 +37,20 @@ public class Carrier extends Robot {
         if (rc.getLocation().isAdjacentTo(hqInfo.location) && rc.canTransferResource(hqInfo.location, goal.getResourceType(), rc.getResourceAmount(goal.getResourceType()))) {
           rc.transferResource(hqInfo.location, goal.getResourceType(), rc.getResourceAmount(goal.getResourceType()));
         }
-        go = pathfind(rc, start);
+        go = pathfind(rc, hqInfo.location);
       }
     } else {
-      go=start.directionTo(rc.getLocation());
+      go=hqInfo.location.directionTo(rc.getLocation());
     }
 
     if(rc.canMove(go)){
       rc.move(go);
+    } else if (rc.canMove(go.rotateRight())) {
+      rc.move(go.rotateRight());
+    } else if (rc.canMove(go.rotateLeft())) {
+      rc.move(go.rotateLeft());
+    } else if (rc.canMove(go.opposite())) {
+      rc.move(go.opposite());
     }
   }
 }
