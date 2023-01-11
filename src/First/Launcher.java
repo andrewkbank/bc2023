@@ -20,7 +20,11 @@ public class Launcher extends Robot {
   }
   public void run(RobotController rc) throws GameActionException {
     attack(rc);
-    movement(rc);
+
+    Direction move=movement(rc);
+    if(rc.canMove(move)){
+      rc.move(move);
+    }
     //todo: later, make it able to run-n-gun (not just gun-n-run)
   }
   public void attack(RobotController rc) throws GameActionException{
@@ -35,12 +39,14 @@ public class Launcher extends Robot {
           rc.setIndicatorString("Pew");        
           rc.attack(toAttack);
       }
-    }else{//kill any other unit
+    }else{//look for any other unit
       enemyIndex=targetFire(rc,null);
-      MapLocation toAttack = enemies[enemyIndex].getLocation();
-      if (rc.canAttack(toAttack)) {
-          rc.setIndicatorString("Pew");        
-          rc.attack(toAttack);
+      if(enemyIndex>=0){//kill other unit
+        MapLocation toAttack = enemies[enemyIndex].getLocation();
+        if (rc.canAttack(toAttack)) {
+            rc.setIndicatorString("Pew");        
+            rc.attack(toAttack);
+        }
       }
     }
   }
@@ -54,8 +60,8 @@ public class Launcher extends Robot {
       int attackIndex=-1;
       int enemyHealth=69; //this just so happens to be larger than any enemy health
       for(int i=0;i<enemies.length;++i){//finds lowest health launcher
-        if(type==null){//no specified type to target
-          if(enemies[i].getHealth()<enemyHealth){
+        if(type==null){//no specified type to target (don't target headquarters)
+          if(enemies[i].getType()!=RobotType.HEADQUARTERS&&enemies[i].getHealth()<enemyHealth){
             attackIndex=i;
             enemyHealth=enemies[i].getHealth();
           }

@@ -33,7 +33,9 @@ public class Headquarters extends Robot {
     // Let's try to build a carrier.
     rc.setIndicatorString("Trying to build a carrier");
     if (rc.canBuildRobot(RobotType.CARRIER, newLoc)) {
-        rc.buildRobot(RobotType.CARRIER, newLoc);
+      rc.buildRobot(RobotType.CARRIER, newLoc);
+    }else if(rc.canBuildRobot(RobotType.LAUNCHER,newLoc)){
+      rc.buildRobot(RobotType.LAUNCHER, newLoc);
     }
     for(int i=0;i<100;++i){
       MapLocation m=new MapLocation(i,i);
