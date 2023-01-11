@@ -27,6 +27,11 @@ public class Carrier extends Robot {
     }
     
     Direction go;
+    // If it sees too many carriers, it moves away from them and finds a new well
+    if (rc.senseNearbyRobots(10, rc.getTeam()).length > 5 && rc.getResourceAmount(goal.getResourceType()) < 0.5*GameConstants.CARRIER_CAPACITY) {
+      go = goal_loc.directionTo(hqInfo.location).rotateLeft().rotateLeft();
+      well_found = false;
+    }
     if (well_found) {
       if (rc.getResourceAmount(goal.getResourceType()) < 0.5*GameConstants.CARRIER_CAPACITY) {
         if (rc.getLocation().isAdjacentTo(goal_loc) && rc.canCollectResource(goal_loc, -1)) {
