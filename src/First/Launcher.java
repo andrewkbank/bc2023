@@ -33,6 +33,7 @@ public class Launcher extends Robot {
     }
     //todo: later, make it able to run-n-gun (not just gun-n-run)
   }
+  //does the physical attacking
   public void attack(RobotController rc) throws GameActionException{
     int radius = rc.getType().actionRadiusSquared;
     Team opponent = rc.getTeam().opponent();
@@ -111,6 +112,11 @@ public class Launcher extends Robot {
       if(leaderFriend!=null){
         return rc.getLocation().directionTo(leaderFriend.getLocation());
       }
+    }
+    //move towards islands
+    int[] islands=rc.senseNearbyIslands();
+    if(islands.length>0){
+      return pathfind(rc,rc.senseNearbyIslandLocations(islands[rng.nextInt(islands.length)])[0]);
     }
     // Default: move randomly
     return directions[rng.nextInt(directions.length)];
