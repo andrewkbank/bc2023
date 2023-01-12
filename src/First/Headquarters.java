@@ -13,6 +13,7 @@ public class Headquarters extends Robot {
   // Keeps track of how many we have made
   private static int num_Carriers = 0;
   private static int num_Launchers = 0;
+
   // Keeps track of all data in the array
   private static int[][] islands=new int[1][ISLANDSTORAGELENGTH];
   private static int[][] impassables=new int[1][IMPASSABLESTORAGELENGTH];
@@ -41,6 +42,13 @@ public class Headquarters extends Robot {
       updatePersonalMapFull(rc);
       first_turn=false;
     }
+
+    //these three methods handle the cycling of data in the shared array
+    //they DO NOT write the HQ's personal findings to the array
+    arrayToStorage(rc); //takes data from the shared array and stores it in HQ's personal files
+    updateCycles(rc);   //adds new cycles if needed
+    storageToArray(rc); //posts the next cycle of data (if any)
+
     if(rc.isActionReady()){ //try building
       //gets priority queue of locations to build at (its 29 long)
       MapLocation[] actionLocations=getActionLocations(rc,null);
@@ -129,6 +137,19 @@ public class Headquarters extends Robot {
     return actionLocations;
   }
 
+
+  private void arrayToStorage(RobotController rc) throws GameActionException{
+    //update islands
+    for(int i=0;i<ISLANDSTORAGELENGTH;++i){
+      islands[(rc.getRoundNum()-1)%islands.length][i]=rc.readSharedArray(i);
+    }
+    for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){
+      impassables[(rc.getRoundNum()-1)%impassables.length][i]=rc.readSharedArray(i+ISLANDSTORAGELENGTH);
+    }
+    for(int i=0;i<WELLSTORAGELENGTH;++i){
+      wells[(rc.getRoundNum()-1)%wells.length][i]=rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH);    
+    }
+  }
   //looks at all storage types and sees if any of them needs a new cycle
   private void updateCycles(RobotController rc) throws GameActionException{
     if(updateIslandCycles(rc)){
@@ -189,7 +210,7 @@ public class Headquarters extends Robot {
     storage=temp;
   }
 
-  private void cycleData(RobotController rc) throws GameActionException{
+  private void storageToArray(RobotController rc) throws GameActionException{
     if(islands.length>1){//update islands
       for(int i=0;i<ISLANDSTORAGELENGTH;++i){
         rc.writeSharedArray(i,islands[rc.getRoundNum()%islands.length][i]);
