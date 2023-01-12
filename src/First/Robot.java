@@ -27,6 +27,10 @@ public abstract class Robot {
    *  8 = current southwest
    *  9 = current west
    *  10 = current northwest
+   *  11 = adamantium well
+   *  12 = mana well
+   *  13 = elixir well
+   *  14 + island index = island
    */
   protected int[] map;
   private MapLocation loc;
@@ -86,23 +90,6 @@ public abstract class Robot {
     }
     return closest;
   }
-
-  //dumbass version
-  /*
-  public Direction pathfind(RobotController rc, MapLocation goal) throws GameActionException {
-    Direction dirToDestination=rc.getLocation().directionTo(goal);
-    int i=3;
-    while(!rc.canMove(dirToDestination)&&i>0){
-      if(rc.getRoundNum()%2==0){//roundnum serves as rng (hopefully)
-        dirToDestination=dirToDestination.rotateLeft();
-      }else{
-        dirToDestination=dirToDestination.rotateRight();
-      }
-      --i; //i makes sure it doesn't infinite loop
-    }
-    return dirToDestination;
-  }
-  */
   //dfs
   public Direction pathfind(RobotController rc, MapLocation goal) throws GameActionException{
     LinkedList<MapLocation> stack=new LinkedList<MapLocation>();
@@ -208,14 +195,17 @@ public abstract class Robot {
     MapLocation newLocation=rc.getLocation();
     Direction dirMoved=loc.directionTo(newLocation);
     //rc.setIndicatorString("@Robot.java->updatePersonalMap moved: "+dirMoved);
-    if(dirMoved!=Direction.CENTER){
+
+    if(dirMoved!=Direction.CENTER){ //only need to update the personal map if we moved
       MapLocation[] visibleLocations=getEdgeMapLocations(rc, dirMoved);
-      for(int i=0;i<visibleLocations.length;++i){ //go through all visible locations
+      for(int i=0;i<visibleLocations.length;++i){ //go through all new visible locations
         if(rc.canSenseLocation(visibleLocations[i])&&rc.onTheMap(visibleLocations[i])){ //filter out ones not on the map
-          rc.setIndicatorDot(visibleLocations[i],0,0,100);
+          //rc.setIndicatorDot(visibleLocations[i],0,0,100);
           int setMap=0;
           if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
             setMap=1;
+          }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
+            setMap=14+rc.senseIsland(visibleLocations[i]);
           }else{ //empty squares or currents
             setMap=2;
             MapInfo currentInfo=rc.senseMapInfo(visibleLocations[i]);
@@ -235,6 +225,17 @@ public abstract class Robot {
           map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=setMap;
         }
       }
+      WellInfo[] wellsInRange=rc.senseNearbyWells();
+      for(int i=0;i<wellsInRange.length;++i){
+        int setMap=0;
+        ResourceType resource=wellsInRange[i].getResourceType();
+        switch(resource){
+          case ADAMANTIUM: setMap=11; break;
+          case MANA: setMap=12; break;
+          case ELIXIR: setMap=13; break;
+        }
+        map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
+      }
     }
     loc=rc.getLocation();
   }
@@ -249,6 +250,8 @@ public abstract class Robot {
         int setMap=0;
         if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
           setMap=1;
+        }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
+          setMap=14+rc.senseIsland(visibleLocations[i]);
         }else{ //empty squares or currents
           setMap=2;
           MapInfo currentInfo=rc.senseMapInfo(visibleLocations[i]);
@@ -268,9 +271,17 @@ public abstract class Robot {
         map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=setMap;
       }
     }
+    WellInfo[] wellsInRange=rc.senseNearbyWells();
+      for(int i=0;i<wellsInRange.length;++i){
+        int setMap=0;
+        switch(wellsInRange[i].getResourceType()){
+          case ADAMANTIUM: setMap=11; break;
+          case MANA: setMap=12; break;
+          case ELIXIR: setMap=13; break;
+        }
+        map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
+      }
   }
-  //todo: the map is stored in the shared array, this pushes updates to it
-  public void updateGlobalMap(RobotController rc) throws GameActionException{
-
-  }
+  
+  
 }
