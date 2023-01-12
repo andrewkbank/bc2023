@@ -51,6 +51,24 @@ public class Carrier extends Robot {
       }
     }
     
+    
+    while(rc.isMovementReady()){//handles multiple movements in one turn
+      Direction go=getMove(rc);
+      if(go==Direction.CENTER){
+        break;
+      }
+      if(rc.canMove(go)){
+        rc.move(go);
+      } else if (rc.canMove(go.rotateRight())) {
+        rc.move(go.rotateRight());
+      } else if (rc.canMove(go.rotateLeft())) {
+        rc.move(go.rotateLeft());
+      } else if (rc.canMove(go.opposite())) {
+        rc.move(go.opposite());
+      }
+    }
+  }
+  public Direction getMove(RobotController rc) throws GameActionException{
     Direction go;
     if(goal2!=null&&elixir){//make elixir well
       rc.setIndicatorString("I'm an elixir carrier");
@@ -116,15 +134,6 @@ public class Carrier extends Robot {
         }
       }
     }
-
-    if(rc.canMove(go)){
-      rc.move(go);
-    } else if (rc.canMove(go.rotateRight())) {
-      rc.move(go.rotateRight());
-    } else if (rc.canMove(go.rotateLeft())) {
-      rc.move(go.rotateLeft());
-    } else if (rc.canMove(go.opposite())) {
-      rc.move(go.opposite());
-    }
+    return go;
   }
 }
