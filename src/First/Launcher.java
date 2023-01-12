@@ -97,32 +97,19 @@ public class Launcher extends Robot {
           }
         }
       }
-    } else {
-      // Check if close to edge of map
-      int dx, dy;
-      if      (rc.getLocation().x < 4)                      { dx =  1; }
-      else if (rc.getMapWidth() - rc.getLocation().x < 4)   { dx = -1; }
-      else                                                  { dx =  0; }
-      if      (rc.getLocation().y < 4)                      { dy =  1; }
-      else if (rc.getMapHeight() - rc.getLocation().y < 4)  { dy = -1; }
-      else                                                  { dy =  0; }
-      if (dx != 0 || dy != 0) { return makeDir(dx, dy); }
-      else { // Not close to edge of map
-        RobotInfo[] friends = rc.senseNearbyRobots(radius, rc.getTeam());
-        // No friends
-        if (friends.length == 0) { return hqInfo.location.directionTo(rc.getLocation()); }
-        // Not enough friends
-        else if (friends.length < 3) {
-          return rc.getLocation().directionTo(friends[0].location);
+    } else {//clumping logic
+      RobotInfo[] friends = rc.senseNearbyRobots(radius, rc.getTeam());
+      int myId=rc.getID();
+      int lowestId=myId;
+      RobotInfo leaderFriend=null; //null means that this robot is the leader
+      for(int i=0;i<friends.length;i++){
+        if(friends[i].getType()==RobotType.LAUNCHER&&friends[i].getID()<lowestId){
+          leaderFriend=friends[i];
+          lowestId=friends[i].getID();
         }
-        // Too many friends
-        else if (friends.length > 5) {
-          int avg_x = 0, avg_y = 0;
-          for (RobotInfo r : friends) {
-            avg_x += r.location.x; avg_y += r.location.y;
-          }
-          return new MapLocation(avg_x /= friends.length, avg_y /= friends.length).directionTo(rc.getLocation());
-        }
+      }
+      if(leaderFriend!=null){
+        return rc.getLocation().directionTo(leaderFriend.getLocation());
       }
     }
     // Default: move randomly
