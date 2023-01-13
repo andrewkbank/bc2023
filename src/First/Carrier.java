@@ -21,33 +21,36 @@ public class Carrier extends Robot {
     elixir=false;
     goal2=null;
     goal_loc2=null;
-    this.hqLoc = null;
-    this.hasAnchor = false;
-    this.nearestIslandLoc = null;
+    hqLoc = null;
+    hasAnchor = false;
+    nearestIslandLoc = null;
   }
 
   public void run(RobotController rc) throws GameActionException {
-    updatePersonalMap(rc);
+    if (hqLoc == null) {
+      scanHQ(rc);
+    }
+    if (nearestIslandLoc == null) {
+      scanIslands(rc);
+    }
 
-    if (this.hqLoc == null) {
-      this.scanHQ(rc);
-    }
-    if (this.nearestIslandLoc == null) {
-      this.scanIslands(rc);
-    }
+    //read and write to shared array
+    int before=Clock.getBytecodeNum();
+    readSharedArray(rc);
+    writeSharedArray(rc);
+    rc.setIndicatorString("array bytecode: "+(Clock.getBytecodeNum()-before));
 
     //TODO: change this around later to account for both standard and accel anchors
-    if (rc.canTakeAnchor(this.hqLoc, Anchor.STANDARD)) {
+    if (rc.canTakeAnchor(hqLoc, Anchor.STANDARD)) {
       rc.takeAnchor(hqLoc, Anchor.STANDARD);
-      this.hasAnchor = true;
+      hasAnchor = true;
     }
 
-    if (this.hasAnchor) {
+    if (hasAnchor) {
       if (nearestIslandLoc == null) {
-        this.moveRandom(rc);
-      }
-      else {
-//        Direction[] islandDirs = this.pathfindCarrier(rc, nearestIslandLoc);
+        moveRandom(rc);
+      } else {
+//        Direction[] islandDirs = pathfindCarrier(rc, nearestIslandLoc);
       }
     }
     else {
@@ -81,29 +84,30 @@ public class Carrier extends Robot {
         }
       }
     }
-
-      Direction[] go = getMove(rc);
-      int moveNum = 0;
-      while (rc.isMovementReady()) {//handles multiple movements in one turn
-        if (go[moveNum] == Direction.CENTER) {
-          break;
-        }
-        if (rc.canMove(go[moveNum])) {
-          rc.move(go[moveNum]);
-        } else if (rc.canMove(go[moveNum].rotateRight())) {
-          rc.move(go[moveNum].rotateRight());
-        } else if (rc.canMove(go[moveNum].rotateLeft())) {
-          rc.move(go[moveNum].rotateLeft());
-        } else if (rc.canMove(go[moveNum].opposite())) {
-          rc.move(go[moveNum].opposite());
-        } else {
-          break;
-        }
-        if (rc.canPlaceAnchor()) rc.placeAnchor();
-        if (moveNum == 0) {
-          moveNum = 1;
-        }
+    //rc.setIndicatorString("Bytecode used before movement: "+Clock.getBytecodeNum());
+    Direction[] go = getMove(rc);
+    int moveNum = 0;
+    while (rc.isMovementReady()) {//handles multiple movements in one turn
+      updatePersonalMap(rc);
+      if (go[moveNum] == Direction.CENTER) {
+        break;
       }
+      if (rc.canMove(go[moveNum])) {
+        rc.move(go[moveNum]);
+      } else if (rc.canMove(go[moveNum].rotateRight())) {
+        rc.move(go[moveNum].rotateRight());
+      } else if (rc.canMove(go[moveNum].rotateLeft())) {
+        rc.move(go[moveNum].rotateLeft());
+      } else if (rc.canMove(go[moveNum].opposite())) {
+        rc.move(go[moveNum].opposite());
+      } else {
+        break;
+      }
+      if (rc.canPlaceAnchor()) rc.placeAnchor();
+      if (moveNum == 0) {
+        moveNum = 1;
+      }
+    }
   }
 
   public Direction[] getMove(RobotController rc) throws GameActionException{
@@ -234,11 +238,11 @@ public class Carrier extends Robot {
   }
 
   // looks for the HQ and saves it as an instance variable
-  private void scanHQ(RobotController rc) {
-    RobotInfo[] robots = rc.senseNearbyRobots();
-    for (RobotInfo robot : robots) {
-      if ((robot.getTeam() == rc.getTeam()) && (robot.getType() == RobotType.HEADQUARTERS)) {
-        this.hqLoc = robot.getLocation();
+  private void scanHQ(RobotController rc)throws GameActionException{
+    RobotInfo[] robots = rc.senseNearbyRobots(20,rc.getTeam());
+    for (int i=0;i<robots.length;++i) {
+      if (robots[i].getType() == RobotType.HEADQUARTERS) {
+        hqLoc = robots[i].getLocation();
         break;
       }
     }
@@ -252,7 +256,7 @@ public class Carrier extends Robot {
     for (int id : islandIDs) {
       if (rc.senseTeamOccupyingIsland(id) == Team.NEUTRAL) {
         MapLocation[] islandLocs = rc.senseNearbyIslandLocations(id);
-        this.nearestIslandLoc = islandLocs[0]; // placeholder for now, will eventually find closest neutral island by euclidean distance
+        nearestIslandLoc = islandLocs[0]; // placeholder for now, will eventually find closest neutral island by euclidean distance
       }
     }
   }

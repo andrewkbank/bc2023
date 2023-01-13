@@ -215,23 +215,34 @@ public abstract class Robot {
 
     if(dirMoved!=Direction.CENTER){ //only need to update the personal map if we moved
       MapLocation[] visibleLocations=getEdgeMapLocations(rc, dirMoved);
-      for(int i=0;i<visibleLocations.length;++i){ //go through all new visible locations
+      for(int i=0;i<visibleLocations.length;++i){ //go through all visible locations
         if(rc.canSenseLocation(visibleLocations[i])&&rc.onTheMap(visibleLocations[i])){ //filter out ones not on the map
-          //rc.setIndicatorDot(visibleLocations[i],0,0,100);
-          int setMap=0;
+          rc.setIndicatorDot(visibleLocations[i],0,0,100);
           if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
-            setMap=1;
+            if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=1){
+              map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=1;
+              impassableQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
+            }
           }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
             Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
-            if(islandTeam==Team.NEUTRAL){
-              setMap=14;
-            }else if (islandTeam==rc.getTeam()){
-              setMap=15;
-            }else{
-              setMap=16;
+            if(islandTeam==Team.NEUTRAL){//neutral island
+              if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=14){
+                map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=14;
+                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
+              }
+            }else if (islandTeam==rc.getTeam()){//our island
+              if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=15){
+                map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=15;
+                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096);
+              }
+            }else{//their island
+              if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=16){
+                map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=16;
+                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2);
+              }
             }
           }else{ //empty squares or currents
-            setMap=2;
+            int setMap=2;
             MapInfo currentInfo=rc.senseMapInfo(visibleLocations[i]);
             Direction current=currentInfo.getCurrentDirection();
             //switch-case every direction
@@ -245,20 +256,22 @@ public abstract class Robot {
               case WEST: setMap=9; break;
               case NORTHWEST: setMap=10; break;
             }
+            map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=setMap;
           }
-          map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=setMap;
         }
       }
       WellInfo[] wellsInRange=rc.senseNearbyWells();
       for(int i=0;i<wellsInRange.length;++i){
         int setMap=0;
-        ResourceType resource=wellsInRange[i].getResourceType();
-        switch(resource){
+        switch(wellsInRange[i].getResourceType()){
           case ADAMANTIUM: setMap=11; break;
           case MANA: setMap=12; break;
           case ELIXIR: setMap=13; break;
         }
-        map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
+        if(map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]!=setMap){
+          map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
+          wellQueue.push(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11));
+        }
       }
     }
     loc=rc.getLocation();
@@ -271,20 +284,31 @@ public abstract class Robot {
     for(int i=0;i<visibleLocations.length;++i){ //go through all visible locations
       if(rc.canSenseLocation(visibleLocations[i])&&rc.onTheMap(visibleLocations[i])){ //filter out ones not on the map
         rc.setIndicatorDot(visibleLocations[i],0,0,100);
-        int setMap=0;
         if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
-          setMap=1;
+          if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=1){
+            map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=1;
+            impassableQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
+          }
         }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
           Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
-            if(islandTeam==Team.NEUTRAL){
-              setMap=14;
-            }else if (islandTeam==rc.getTeam()){
-              setMap=15;
-            }else{
-              setMap=16;
+          if(islandTeam==Team.NEUTRAL){//neutral island
+            if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=14){
+              map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=14;
+              islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
             }
+          }else if (islandTeam==rc.getTeam()){//our island
+            if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=15){
+              map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=15;
+              islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096);
+            }
+          }else{//their island
+            if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=16){
+              map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=16;
+              islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2);
+            }
+          }
         }else{ //empty squares or currents
-          setMap=2;
+          int setMap=2;
           MapInfo currentInfo=rc.senseMapInfo(visibleLocations[i]);
           Direction current=currentInfo.getCurrentDirection();
           //switch-case every direction
@@ -298,20 +322,23 @@ public abstract class Robot {
             case WEST: setMap=9; break;
             case NORTHWEST: setMap=10; break;
           }
+          map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=setMap;
         }
-        map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=setMap;
       }
     }
     WellInfo[] wellsInRange=rc.senseNearbyWells();
-      for(int i=0;i<wellsInRange.length;++i){
-        int setMap=0;
-        switch(wellsInRange[i].getResourceType()){
-          case ADAMANTIUM: setMap=11; break;
-          case MANA: setMap=12; break;
-          case ELIXIR: setMap=13; break;
-        }
-        map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
+    for(int i=0;i<wellsInRange.length;++i){
+      int setMap=0;
+      switch(wellsInRange[i].getResourceType()){
+        case ADAMANTIUM: setMap=11; break;
+        case MANA: setMap=12; break;
+        case ELIXIR: setMap=13; break;
       }
+      if(map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]!=setMap){
+        map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
+        wellQueue.push(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11));
+      }
+    }
   }
   
   //reads info from shared array and updates personal map

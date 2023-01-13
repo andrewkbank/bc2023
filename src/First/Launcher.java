@@ -19,7 +19,6 @@ public class Launcher extends Robot {
     super(rc);
   }
   public void run(RobotController rc) throws GameActionException {
-    
     attack(rc);
 
     Direction go=movement(rc);

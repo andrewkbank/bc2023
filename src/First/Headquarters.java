@@ -45,6 +45,12 @@ public class Headquarters extends Robot {
     updateCycles(rc);   //adds new cycles if needed
     storageToArray(rc); //posts the next cycle of data (if any)
 
+    //tries to build a unit
+    build(rc);
+  }
+
+  //builds units
+  private void build(RobotController rc) throws GameActionException{
     if(rc.isActionReady()){ //try building
       //gets priority queue of locations to build at (its 29 long)
       MapLocation[] actionLocations=getActionLocations(rc,null);
