@@ -38,7 +38,9 @@ public class Destabilizer extends Robot {
       if (rc.canMove(targetDirection)) {
         rc.move(targetDirection);
 //        rc.destabilize(rc.getLocation());
-        this.attack(rc);
+        if (rc.isActionReady()) {
+          this.attack(rc);
+        }
       } else if (rc.canMove(targetDirection.rotateLeft())) {
         rc.move(targetDirection.rotateLeft());
       } else if (rc.canMove(targetDirection.rotateRight())) {
