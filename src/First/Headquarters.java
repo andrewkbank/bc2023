@@ -5,10 +5,6 @@ import java.util.Random;
 
 import javax.management.monitor.GaugeMonitor;
 public class Headquarters extends Robot {
-  //constants
-  public final static int ISLANDSTORAGELENGTH=10;
-  public final static int IMPASSABLESTORAGELENGTH=20;
-  public final static int WELLSTORAGELENGTH=2;
 
   // Keeps track of how many we have made
   private static int num_Carriers = 0;
@@ -57,11 +53,17 @@ public class Headquarters extends Robot {
       }
       //tries building at each of those locations
       for(int i=0;i<actionLocations.length;++i){
-        if (rc.canBuildRobot(RobotType.CARRIER, actionLocations[i]) && (num_Carriers < 5 || num_Carriers < 1.5*num_Launchers)) {
-          rc.buildRobot(RobotType.CARRIER, actionLocations[i]);
+        if (rc.canBuildRobot(RobotType.DESTABILIZER, actionLocations[i])) {
+          rc.buildRobot(RobotType.DESTABILIZER, actionLocations[i]);
           break;
-        }else if(rc.canBuildRobot(RobotType.LAUNCHER,actionLocations[i])){
+        }
+        else if (rc.canBuildRobot(RobotType.CARRIER, actionLocations[i]) && (num_Carriers < 5 || num_Carriers < 1.5*num_Launchers) && (num_Carriers < 60)) {
+          rc.buildRobot(RobotType.CARRIER, actionLocations[i]);
+          num_Carriers++;
+          break;
+        }else if(rc.canBuildRobot(RobotType.LAUNCHER,actionLocations[i]) && (num_Launchers < 60)){
           rc.buildRobot(RobotType.LAUNCHER, actionLocations[i]);
+          num_Launchers++;
           break;
         }
       }

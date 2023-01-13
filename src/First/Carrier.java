@@ -10,6 +10,9 @@ public class Carrier extends Robot {
   private static boolean elixir;
   private static WellInfo goal2;
   private static MapLocation goal_loc2;
+  private static MapLocation hqLoc;
+  private static boolean hasAnchor;
+  private MapLocation nearestIslandLoc;
 
   public Carrier(RobotController rc) throws GameActionException {
     super(rc);
@@ -18,64 +21,99 @@ public class Carrier extends Robot {
     elixir=false;
     goal2=null;
     goal_loc2=null;
+    this.hqLoc = null;
+    this.hasAnchor = false;
+    this.nearestIslandLoc = null;
   }
 
   public void run(RobotController rc) throws GameActionException {
     updatePersonalMap(rc);
-    
-    if (!well_found) {
-      nearby_wells = rc.senseNearbyWells();
-      int i;
-      for(i=0;i<nearby_wells.length;++i){//picks a well that isn't crowded
-        if(rc.senseNearbyRobots(nearby_wells[i].getMapLocation(),6,rc.getTeam()).length<4){
-          well_found=true;
+
+    if (this.hqLoc == null) {
+      this.scanHQ(rc);
+    }
+    if (this.nearestIslandLoc == null) {
+      this.scanIslands(rc);
+    }
+
+    //TODO: change this around later to account for both standard and accel anchors
+    if (rc.canTakeAnchor(this.hqLoc, Anchor.STANDARD)) {
+      rc.takeAnchor(hqLoc, Anchor.STANDARD);
+      this.hasAnchor = true;
+    }
+
+    if (this.hasAnchor) {
+      if (nearestIslandLoc == null) {
+        this.moveRandom(rc);
+      }
+      else {
+//        Direction[] islandDirs = this.pathfindCarrier(rc, nearestIslandLoc);
+      }
+    }
+    else {
+      if (!well_found) {
+        nearby_wells = rc.senseNearbyWells();
+        int i;
+        for (i = 0; i < nearby_wells.length; ++i) {//picks a well that isn't crowded
+          if (rc.senseNearbyRobots(nearby_wells[i].getMapLocation(), 6, rc.getTeam()).length < 4) {
+            well_found = true;
+            break;
+          }
+        }
+        if (well_found) {
+          goal = nearby_wells[i];
+          goal_loc = goal.getMapLocation();
+          //elixir code below
+          if (goal.getResourceType() != ResourceType.ELIXIR
+              && rc.getRoundNum() % 10 == 0) {//one in 10 chance for carrier to be an elixir carrier
+            elixir = true;
+            rc.setIndicatorString("elixir=true");
+          }
+        }
+      } else if (goal2 == null && elixir) {//get second well for elixir
+        nearby_wells = rc.senseNearbyWells();
+        for (int i = 0; i < nearby_wells.length; ++i) {
+          if (nearby_wells[i].getResourceType() != ResourceType.ELIXIR
+              && nearby_wells[i].getResourceType() != goal.getResourceType()) {
+            goal2 = nearby_wells[i];
+            goal_loc2 = goal2.getMapLocation();
+          }
+        }
+      }
+    }
+
+      Direction[] go = getMove(rc);
+      int moveNum = 0;
+      while (rc.isMovementReady()) {//handles multiple movements in one turn
+        if (go[moveNum] == Direction.CENTER) {
           break;
         }
-      }
-      if (well_found) {
-        goal = nearby_wells[i];
-        goal_loc = goal.getMapLocation();
-        //elixir code below
-        if(goal.getResourceType()!=ResourceType.ELIXIR&&rc.getRoundNum()%10==0){//one in 10 chance for carrier to be an elixir carrier
-          elixir=true;
-          rc.setIndicatorString("elixir=true");
+        if (rc.canMove(go[moveNum])) {
+          rc.move(go[moveNum]);
+        } else if (rc.canMove(go[moveNum].rotateRight())) {
+          rc.move(go[moveNum].rotateRight());
+        } else if (rc.canMove(go[moveNum].rotateLeft())) {
+          rc.move(go[moveNum].rotateLeft());
+        } else if (rc.canMove(go[moveNum].opposite())) {
+          rc.move(go[moveNum].opposite());
+        } else {
+          break;
+        }
+        if (rc.canPlaceAnchor()) rc.placeAnchor();
+        if (moveNum == 0) {
+          moveNum = 1;
         }
       }
-    }else if(goal2==null&&elixir){//get second well for elixir
-      nearby_wells = rc.senseNearbyWells();
-      for(int i=0;i<nearby_wells.length;++i){
-        if(nearby_wells[i].getResourceType()!=ResourceType.ELIXIR&&nearby_wells[i].getResourceType()!=goal.getResourceType()){
-          goal2=nearby_wells[i];
-          goal_loc2=goal2.getMapLocation();
-        }
-      }
-    }
-    
-    Direction[] go=getMove(rc);
-    int moveNum=0;
-    while(rc.isMovementReady()){//handles multiple movements in one turn
-      if(go[moveNum]==Direction.CENTER){
-        break;
-      }
-      if(rc.canMove(go[moveNum])){
-        rc.move(go[moveNum]);
-      } else if (rc.canMove(go[moveNum].rotateRight())) {
-        rc.move(go[moveNum].rotateRight());
-      } else if (rc.canMove(go[moveNum].rotateLeft())) {
-        rc.move(go[moveNum].rotateLeft());
-      } else if (rc.canMove(go[moveNum].opposite())) {
-        rc.move(go[moveNum].opposite());
-      } else {
-        break;
-      }
-      if(moveNum==0){
-        moveNum=1;
-      }
-    }
   }
+
   public Direction[] getMove(RobotController rc) throws GameActionException{
     Direction[] go;
-    if(goal2!=null&&elixir){//make elixir well
+
+    if (hasAnchor && nearestIslandLoc != null) {
+      go = pathfindCarrier(rc, nearestIslandLoc);
+    }
+
+    else if(goal2!=null&&elixir){//make elixir well
       rc.setIndicatorString("I'm an elixir carrier");
       if (rc.getResourceAmount(goal.getResourceType()) < GameConstants.CARRIER_CAPACITY) { //collect from goal1
         if (rc.getLocation().isAdjacentTo(goal_loc) && rc.canCollectResource(goal_loc, -1)) {
@@ -201,5 +239,29 @@ public class Carrier extends Robot {
     path[0]=rc.getLocation().directionTo(goal);
     return path;
 
+  }
+
+  // looks for the HQ and saves it as an instance variable
+  private void scanHQ(RobotController rc) {
+    RobotInfo[] robots = rc.senseNearbyRobots();
+    for (RobotInfo robot : robots) {
+      if ((robot.getTeam() == rc.getTeam()) && (robot.getType() == RobotType.HEADQUARTERS)) {
+        this.hqLoc = robot.getLocation();
+        break;
+      }
+    }
+  }
+
+  //TODO: find some way to scan for wells and use some shortest path algo to find nearest well?
+
+  // gets info for neutral islands
+  private void scanIslands(RobotController rc) throws GameActionException {
+    int[] islandIDs = rc.senseNearbyIslands();
+    for (int id : islandIDs) {
+      if (rc.senseTeamOccupyingIsland(id) == Team.NEUTRAL) {
+        MapLocation[] islandLocs = rc.senseNearbyIslandLocations(id);
+        this.nearestIslandLoc = islandLocs[0]; // placeholder for now, will eventually find closest neutral island by euclidean distance
+      }
+    }
   }
 }

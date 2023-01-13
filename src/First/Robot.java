@@ -1,5 +1,6 @@
 package First;
 
+import java.util.Random;
 import javax.lang.model.util.ElementScanner6;
 import java.util.LinkedList;
 import battlecode.common.*;
@@ -15,6 +16,11 @@ import battlecode.common.*;
  * should be in the subclass
  */
 public abstract class Robot {
+  //constants
+  public final static int ISLANDSTORAGELENGTH=10;
+  public final static int IMPASSABLESTORAGELENGTH=20;
+  public final static int WELLSTORAGELENGTH=2;
+
   /*  map format
    *  0 = unknown
    *  1 = tempest (unpassable)
@@ -33,7 +39,13 @@ public abstract class Robot {
    *  14 + island index = island
    */
   protected int[] map;
+  //these queues are the new info the bot has found and needs to upload to the shared array
+  protected LinkedList<Integer> islandQueue;
+  protected LinkedList<Integer> impassableQueue;
+  protected LinkedList<Integer> wellQueue;
+
   private MapLocation loc;
+  
   protected RobotInfo hqInfo;
   static final Direction[] directions = {
     Direction.NORTH,
@@ -283,5 +295,80 @@ public abstract class Robot {
       }
   }
   
-  
+  //reads info from shared array and updates personal map
+  public void readSharedArray(RobotController rc) throws GameActionException{
+    //todo: add ability to ignore data we already know (maybe impossible)
+    int data;
+    for(int i=0;i<ISLANDSTORAGELENGTH;++i){ //go through every island storage slot
+      data=rc.readSharedArray(i); //read shared array
+      if(data==0){ //if there aren't any contents in the slot...
+        break;
+      }
+      //store data from shared array into personal map
+    }
+    for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){ //go through every island storage slot
+      data=rc.readSharedArray(i+ISLANDSTORAGELENGTH); //read shared array
+      if(data==0){ //if there aren't any contents in the slot...
+        break;
+      }
+      //store data from shared array into personal map
+    }
+    for(int i=0;i<WELLSTORAGELENGTH;++i){ //go through every island storage slot
+      data=rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH); //read shared array
+      if(data==0){ //if there aren't any contents in the slot...
+        break;
+      }
+      //store data from shared array into personal map
+    }
+  }
+
+  //writes info from the queues to the array (if possible)
+  public void writeSharedArray(RobotController rc) throws GameActionException{
+    if(rc.canWriteSharedArray()){ //check if we are in range of something to write
+      if(!islandQueue.isEmpty()){ //only write if we have something to write
+        for(int i=0;i<ISLANDSTORAGELENGTH;++i){ //go through every island storage slot
+          if(rc.readSharedArray(i)==0){ //if there aren't any contents in the slot...
+            rc.writeSharedArray(i,islandQueue.pop()); //we write our own contents (and remove it from the queue)
+          }
+        }
+      }
+      if(!impassableQueue.isEmpty()){ //only write if we have something to write
+        for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){ //go through every impassable storage slot
+          if(rc.readSharedArray(i+ISLANDSTORAGELENGTH)==0){ //if there aren't any contents in the slot...
+            rc.writeSharedArray(i+ISLANDSTORAGELENGTH,impassableQueue.pop()); //we write our own contents (and remove it from the queue)
+          }
+        }
+      }
+      if(!wellsQueue.isEmpty()){ //only write if we have something to write
+        for(int i=0;i<WELLSTORAGELENGTH;++i){ //go through every well storage slot
+          if(rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH)==0){ //if there aren't any contents in the slot...
+            rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,impassableQueue.pop()); //we write our own contents (and remove it from the queue)
+          }
+        }
+      }
+    }
+  }
+
+  public void moveRandom(RobotController rc) throws GameActionException {
+    Random random = new Random();
+    Direction direction = directions[random.nextInt(directions.length)];
+
+    if (rc.canMove(direction)) {
+      rc.move(direction);
+    }
+    else if (rc.canMove(direction.rotateRight())) {
+      rc.move(direction.rotateRight());
+    }
+    else if (rc.canMove(direction.rotateLeft())) {
+      rc.move(direction.rotateLeft());
+    }
+    else if (rc.canMove(direction.opposite())) {
+      rc.move(direction.opposite());
+    }
+    else {
+      if (rc.canMove(Direction.CENTER)) {
+        rc.move(Direction.CENTER);
+      }
+    }
+  }
 }
