@@ -5,10 +5,6 @@ import java.util.Random;
 
 import javax.management.monitor.GaugeMonitor;
 public class Headquarters extends Robot {
-  //constants
-  public final static int ISLANDSTORAGELENGTH=10;
-  public final static int IMPASSABLESTORAGELENGTH=20;
-  public final static int WELLSTORAGELENGTH=2;
 
   // Keeps track of how many we have made
   private static int num_Carriers = 0;
