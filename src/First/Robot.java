@@ -36,7 +36,9 @@ public abstract class Robot {
    *  11 = adamantium well
    *  12 = mana well
    *  13 = elixir well
-   *  14 + island index = island
+   *  14 = unclaimed island
+   *  15 = our island
+   *  16 = other team's island
    */
   protected int[] map;
   //these queues are the new info the bot has found and needs to upload to the shared array
@@ -70,6 +72,9 @@ public abstract class Robot {
         if (r.type == RobotType.HEADQUARTERS) { hqInfo = r; break; }
       }
     }
+    islandQueue=new LinkedList<Integer>();
+    impassableQueue=new LinkedList<Integer>();
+    wellQueue=new LinkedList<Integer>();
   }
 
   // Every subclass must define their own run function.
@@ -217,7 +222,12 @@ public abstract class Robot {
           if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
             setMap=1;
           }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
-            setMap=14+rc.senseIsland(visibleLocations[i]);
+            Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
+            switch(islandTeam){
+              case NEUTRAL: setMap=14; break;
+              case rc.getTeam(): setMap=15; break;
+              case rc.getTeam().opponent(): setMap=16; break;
+            }
           }else{ //empty squares or currents
             setMap=2;
             MapInfo currentInfo=rc.senseMapInfo(visibleLocations[i]);
@@ -263,7 +273,12 @@ public abstract class Robot {
         if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
           setMap=1;
         }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
-          setMap=14+rc.senseIsland(visibleLocations[i]);
+          Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
+            switch(islandTeam){
+              case NEUTRAL: setMap=14; break;
+              case rc.getTeam(): setMap=15; break;
+              case rc.getTeam().opponent(): setMap=16; break;
+            }
         }else{ //empty squares or currents
           setMap=2;
           MapInfo currentInfo=rc.senseMapInfo(visibleLocations[i]);
@@ -305,6 +320,11 @@ public abstract class Robot {
         break;
       }
       //store data from shared array into personal map
+      int loc=data%4096;
+      int team=(data/4096)%4;
+      map[loc]=14+team;
+      //removes data found in the array from the upload queue
+      islandQueue.removeFirstOccurrence(data);
     }
     for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){ //go through every island storage slot
       data=rc.readSharedArray(i+ISLANDSTORAGELENGTH); //read shared array
@@ -312,6 +332,10 @@ public abstract class Robot {
         break;
       }
       //store data from shared array into personal map
+      int loc=data%4096;  //just for safety (we should just be able to put map[data] next line)
+      map[loc]=1;
+      //removes data found in the array from the upload queue
+      impassableQueue.removeFirstOccurrence(data);
     }
     for(int i=0;i<WELLSTORAGELENGTH;++i){ //go through every island storage slot
       data=rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH); //read shared array
@@ -319,6 +343,11 @@ public abstract class Robot {
         break;
       }
       //store data from shared array into personal map
+      int loc=data%4096;
+      int wellType=(data/4096)/4;
+      map[loc]=11+wellType;
+      //removes data found in the array from the upload queue
+      wellQueue.removeFirstOccurrence(data);
     }
   }
 
