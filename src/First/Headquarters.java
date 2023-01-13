@@ -44,6 +44,8 @@ public class Headquarters extends Robot {
     arrayToStorage(rc); //takes data from the shared array and stores it in HQ's personal files
     updateCycles(rc);   //adds new cycles if needed
     storageToArray(rc); //posts the next cycle of data (if any)
+    
+    rc.setIndicatorString("islands: "+islands[0][0]+" impassables: "+impassables[0][0]+" wells: "+wells[0][0]);
 
     //tries to build a unit
     build(rc);
