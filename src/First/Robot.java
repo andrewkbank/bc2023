@@ -324,7 +324,7 @@ public abstract class Robot {
 
   //writes info from the queues to the array (if possible)
   public void writeSharedArray(RobotController rc) throws GameActionException{
-    if(rc.canWriteSharedArray()){ //check if we are in range of something to write
+    if(rc.canWriteSharedArray(0, 0)){ //check if we are in range of something to write
       if(!islandQueue.isEmpty()){ //only write if we have something to write
         for(int i=0;i<ISLANDSTORAGELENGTH;++i){ //go through every island storage slot
           if(rc.readSharedArray(i)==0){ //if there aren't any contents in the slot...
@@ -339,7 +339,7 @@ public abstract class Robot {
           }
         }
       }
-      if(!wellsQueue.isEmpty()){ //only write if we have something to write
+      if(!wellQueue.isEmpty()){ //only write if we have something to write
         for(int i=0;i<WELLSTORAGELENGTH;++i){ //go through every well storage slot
           if(rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH)==0){ //if there aren't any contents in the slot...
             rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,impassableQueue.pop()); //we write our own contents (and remove it from the queue)
