@@ -1,5 +1,6 @@
 package First;
 
+import java.util.Random;
 import javax.lang.model.util.ElementScanner6;
 import java.util.LinkedList;
 import battlecode.common.*;
@@ -283,5 +284,26 @@ public abstract class Robot {
       }
   }
   
-  
+  public void moveRandom(RobotController rc) throws GameActionException {
+    Random random = new Random();
+    Direction direction = directions[random.nextInt(directions.length)];
+
+    if (rc.canMove(direction)) {
+      rc.move(direction);
+    }
+    else if (rc.canMove(direction.rotateRight())) {
+      rc.move(direction.rotateRight());
+    }
+    else if (rc.canMove(direction.rotateLeft())) {
+      rc.move(direction.rotateLeft());
+    }
+    else if (rc.canMove(direction.opposite())) {
+      rc.move(direction.opposite());
+    }
+    else {
+      if (rc.canMove(Direction.CENTER)) {
+        rc.move(Direction.CENTER);
+      }
+    }
+  }
 }
