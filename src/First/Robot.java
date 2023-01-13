@@ -223,10 +223,12 @@ public abstract class Robot {
             setMap=1;
           }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
             Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
-            switch(islandTeam){
-              case NEUTRAL: setMap=14; break;
-              case rc.getTeam(): setMap=15; break;
-              case rc.getTeam().opponent(): setMap=16; break;
+            if(islandTeam==Team.NEUTRAL){
+              setMap=14;
+            }else if (islandTeam==rc.getTeam()){
+              setMap=15;
+            }else{
+              setMap=16;
             }
           }else{ //empty squares or currents
             setMap=2;
@@ -274,10 +276,12 @@ public abstract class Robot {
           setMap=1;
         }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
           Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
-            switch(islandTeam){
-              case NEUTRAL: setMap=14; break;
-              case rc.getTeam(): setMap=15; break;
-              case rc.getTeam().opponent(): setMap=16; break;
+            if(islandTeam==Team.NEUTRAL){
+              setMap=14;
+            }else if (islandTeam==rc.getTeam()){
+              setMap=15;
+            }else{
+              setMap=16;
             }
         }else{ //empty squares or currents
           setMap=2;
