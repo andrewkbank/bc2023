@@ -34,6 +34,7 @@ public abstract class Robot {
    */
   protected int[] map;
   private MapLocation loc;
+  
   protected RobotInfo hqInfo;
   static final Direction[] directions = {
     Direction.NORTH,
