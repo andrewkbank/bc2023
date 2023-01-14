@@ -38,7 +38,7 @@ public class Carrier extends Robot {
     int before=Clock.getBytecodeNum();
     readSharedArray(rc);
     writeSharedArray(rc);
-    rc.setIndicatorString("array bytecode: "+(Clock.getBytecodeNum()-before));
+    //rc.setIndicatorString("array bytecode: "+(Clock.getBytecodeNum()-before));
 
     //TODO: change this around later to account for both standard and accel anchors
     if (rc.canTakeAnchor(hqLoc, Anchor.STANDARD)) {
@@ -119,7 +119,7 @@ public class Carrier extends Robot {
 
     else if(goal2!=null&&elixir){//make elixir well
       rc.setIndicatorString("I'm an elixir carrier");
-      if (rc.getResourceAmount(goal.getResourceType()) < GameConstants.CARRIER_CAPACITY) { //collect from goal1
+      if (rc.getResourceAmount(goal.getResourceType()) < 39) { //collect from goal1
         if (rc.getLocation().isAdjacentTo(goal_loc) && rc.canCollectResource(goal_loc, -1)) {
           rc.collectResource(goal_loc, -1);
         }
@@ -145,12 +145,12 @@ public class Carrier extends Robot {
       if(rc.canSenseLocation(goal_loc)){//update well info (in case the well is now an elixir well)
         goal=rc.senseWell(goal_loc);
       }
-      if (rc.getResourceAmount(goal.getResourceType()) < 0.5*GameConstants.CARRIER_CAPACITY) {
+      if (rc.getResourceAmount(goal.getResourceType()) < 39) {
         if (rc.getLocation().isAdjacentTo(goal_loc) && rc.canCollectResource(goal_loc, -1)) {
           rc.collectResource(goal_loc, -1);
         }
         go = pathfindCarrier(rc, goal_loc);
-      } else { // COLLECTED 50% RESOURCES
+      } else { // COLLECTED 39 RESOURCES
         if (rc.getLocation().isAdjacentTo(hqInfo.location) && rc.canTransferResource(hqInfo.location, goal.getResourceType(), rc.getResourceAmount(goal.getResourceType()))) {
           rc.transferResource(hqInfo.location, goal.getResourceType(), rc.getResourceAmount(goal.getResourceType()));
         }

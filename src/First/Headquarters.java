@@ -54,6 +54,15 @@ public class Headquarters extends Robot {
   //builds units
   private void build(RobotController rc) throws GameActionException{
     if(rc.isActionReady()){ //try building
+      //anchor building is priority
+      if(availableIsland()){
+        if(rc.canBuildAnchor(Anchor.ACCELERATING)&&rc.getResourceAmount(ResourceType.ELIXIR)>600){ //build accelerating anchor
+          rc.buildAnchor(Anchor.ACCELERATING);
+        }
+        if(rc.canBuildAnchor(Anchor.STANDARD)&&rc.getResourceAmount(ResourceType.ADAMANTIUM)>200&&rc.getResourceAmount(ResourceType.MANA)>200){
+          rc.buildAnchor(Anchor.STANDARD);
+        }
+      }
       //gets priority queue of locations to build at (its 29 long)
       MapLocation[] actionLocations=getActionLocations(rc,null);
       for(int i=0;i<actionLocations.length;++i){
@@ -236,5 +245,15 @@ public class Headquarters extends Robot {
         rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,wells[rc.getRoundNum()%wells.length][i]);
       }
     }
+  }
+  private boolean availableIsland(){
+    for(int i=0;i<islands.length;++i){
+      for(int j=0;j<ISLANDSTORAGELENGTH;++j){
+        if((islands[i][j]/4096)%4==0){
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
