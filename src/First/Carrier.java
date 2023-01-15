@@ -13,6 +13,7 @@ public class Carrier extends Robot {
   private static MapLocation hqLoc;
   private static boolean hasAnchor;
   private MapLocation nearestIslandLoc;
+  private MapLocation nearestNeutralIsland;
 
   public Carrier(RobotController rc) throws GameActionException {
     super(rc);
@@ -30,8 +31,11 @@ public class Carrier extends Robot {
     if (hqLoc == null) {
       scanHQ(rc);
     }
-    if (nearestIslandLoc == null) {
-      scanIslands(rc);
+//    if (nearestIslandLoc == null) {
+//      scanIslands(rc);
+//    }
+    if (nearestNeutralIsland == null) {
+      this.getNearestIsland(rc);
     }
 
     //read and write to shared array
@@ -103,7 +107,10 @@ public class Carrier extends Robot {
       } else {
         break;
       }
-      if (rc.canPlaceAnchor()) rc.placeAnchor();
+      if (rc.canPlaceAnchor()) { // need to check if it is already occupied
+        rc.placeAnchor();
+        hasAnchor = false;
+      }
       if (moveNum == 0) {
         moveNum = 1;
       }
@@ -113,8 +120,8 @@ public class Carrier extends Robot {
   public Direction[] getMove(RobotController rc) throws GameActionException{
     Direction[] go;
 
-    if (hasAnchor && nearestIslandLoc != null) {
-      go = pathfindCarrier(rc, nearestIslandLoc);
+    if (hasAnchor && nearestNeutralIsland != null) {
+      go = pathfindCarrier(rc, nearestNeutralIsland);
     }
 
     else if(goal2!=null&&elixir){//make elixir well
@@ -253,11 +260,37 @@ public class Carrier extends Robot {
   // gets info for neutral islands
   private void scanIslands(RobotController rc) throws GameActionException {
     int[] islandIDs = rc.senseNearbyIslands();
-    for (int id : islandIDs) {
-      if (rc.senseTeamOccupyingIsland(id) == Team.NEUTRAL) {
-        MapLocation[] islandLocs = rc.senseNearbyIslandLocations(id);
-        nearestIslandLoc = islandLocs[0]; // placeholder for now, will eventually find closest neutral island by euclidean distance
+    for (int i = 0; i < islandIDs.length; i++) {
+      if (rc.senseTeamOccupyingIsland(islandIDs[i]) == Team.NEUTRAL) {
+        MapLocation[] islandLocs = rc.senseNearbyIslandLocations(islandIDs[i]);
+//        nearestIslandLoc = islandLocs[0]; // placeholder for now, will eventually find closest neutral island by euclidean distance
+
       }
     }
   }
+
+  private void getNearestIsland(RobotController rc) throws GameActionException {
+    int closestDist = Integer.MIN_VALUE;
+    for (int i = 0; i < 9; i++) {
+      int sharedArrayValue = rc.readSharedArray(i);
+      // checks if it is a neutral island (not our team and not other team)
+      if (((sharedArrayValue & 0b001000000000000) < 1) && ((sharedArrayValue & 0b010000000000000) < 1)) {
+        int locationValue = sharedArrayValue;
+        if (locationValue >= Math.pow(2, 14)) {
+          locationValue = (int) (locationValue - Math.pow(2,14));
+        }
+
+        int x = locationValue % rc.getMapWidth();
+        int y = (locationValue - x) / rc.getMapWidth();
+
+        MapLocation neutralIsland = new MapLocation(x, y);
+        int dist = rc.getLocation().distanceSquaredTo(neutralIsland);
+        if (dist < closestDist) {
+          closestDist = dist;
+          this.nearestNeutralIsland = neutralIsland;
+        }
+      }
+    }
+  }
+
 }
