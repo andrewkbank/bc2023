@@ -3,6 +3,7 @@ package First;
 import java.util.Random;
 import javax.lang.model.util.ElementScanner6;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import battlecode.common.*;
 
 /*
@@ -221,24 +222,24 @@ public abstract class Robot {
           if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
             if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=1){
               map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=1;
-              impassableQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
+              impassableQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+65536);
             }
           }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
             Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
             if(islandTeam==Team.NEUTRAL){//neutral island
               if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=14){
                 map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=14;
-                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
+                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+65536);
               }
             }else if (islandTeam==rc.getTeam()){//our island
               if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=15){
                 map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=15;
-                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096);
+                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096+65536);
               }
             }else{//their island
               if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=16){
                 map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=16;
-                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2);
+                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2+65536);
               }
             }
           }else{ //empty squares or currents
@@ -270,7 +271,7 @@ public abstract class Robot {
         }
         if(map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]!=setMap){
           map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
-          wellQueue.push(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11));
+          wellQueue.push(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11)+65536);
         }
       }
     }
@@ -384,21 +385,62 @@ public abstract class Robot {
 
   //writes info from the queues to the array (if possible)
   public void writeSharedArray(RobotController rc) throws GameActionException{
-    if(rc.canWriteSharedArray(0, 0)){ //check if we are in range of something to write
-      for(int i=0;i<ISLANDSTORAGELENGTH&&!islandQueue.isEmpty();++i){ //go through every island storage slot
-        if(rc.readSharedArray(i)==0){ //if there aren't any contents in the slot...
+    boolean decrement=false;
+    for(int i=0;i<ISLANDSTORAGELENGTH&&!islandQueue.isEmpty();++i){ //go through every island storage slot
+      if(rc.readSharedArray(i)==0){ //if there aren't any contents in the slot...
+        if(rc.canWriteSharedArray(0, 0)&&islandQueue.peek()<65536){ //check if we can write
           rc.writeSharedArray(i,islandQueue.pop()); //we write our own contents (and remove it from the queue)
         }
+        decrement=true;
       }
-      for(int i=0;i<IMPASSABLESTORAGELENGTH&&!impassableQueue.isEmpty();++i){ //go through every impassable storage slot
-        if(rc.readSharedArray(i+ISLANDSTORAGELENGTH)==0){ //if there aren't any contents in the slot...
+    }
+    if(decrement){decrementIslandQueue();}
+    decrement=false;
+    for(int i=0;i<IMPASSABLESTORAGELENGTH&&!impassableQueue.isEmpty();++i){ //go through every impassable storage slot
+      if(rc.readSharedArray(i+ISLANDSTORAGELENGTH)==0){ //if there aren't any contents in the slot...
+        if(rc.canWriteSharedArray(0,0)&&impassableQueue.peek()<65536){ //check if we can write
           rc.writeSharedArray(i+ISLANDSTORAGELENGTH,impassableQueue.pop()); //we write our own contents (and remove it from the queue)
         }
+        decrement=true;
       }
-      for(int i=0;i<WELLSTORAGELENGTH&&!wellQueue.isEmpty();++i){ //go through every well storage slot
-        if(rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH)==0){ //if there aren't any contents in the slot...
+    }
+    if(decrement){decrementImpassableQueue();}
+    decrement=false;
+    for(int i=0;i<WELLSTORAGELENGTH&&!wellQueue.isEmpty();++i){ //go through every well storage slot
+      if(rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH)==0){ //if there aren't any contents in the slot...
+        if(rc.canWriteSharedArray(0,0)&&wellQueue.peek()<65536){ //check if we can write
           rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,wellQueue.pop()); //we write our own contents (and remove it from the queue)
         }
+        decrement=true;
+      }
+    }
+    if(decrement){decrementWellQueue();}
+  }
+
+  private void decrementIslandQueue(){
+    ListIterator<Integer> iter=islandQueue.listIterator();
+    while(iter.hasNext()){
+      int iterValue=iter.next().intValue();
+      if(iterValue>=65536){
+        iter.set(iterValue-65536);
+      }
+    }
+  }
+  private void decrementImpassableQueue(){
+    ListIterator<Integer> iter=impassableQueue.listIterator();
+    while(iter.hasNext()){
+      int iterValue=iter.next().intValue();
+      if(iterValue>=65536){
+        iter.set(iterValue-65536);
+      }
+    }
+  }
+  private void decrementWellQueue(){
+    ListIterator<Integer> iter=wellQueue.listIterator();
+    while(iter.hasNext()){
+      int iterValue=iter.next().intValue();
+      if(iterValue>=65536){
+        iter.set(iterValue-65536);
       }
     }
   }

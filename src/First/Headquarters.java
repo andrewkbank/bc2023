@@ -43,8 +43,8 @@ public class Headquarters extends Robot {
     //these three methods handle the cycling of data in the shared array
     //they DO NOT write the HQ's personal findings to the array
     arrayToStorage(rc); //takes data from the shared array and stores it in HQ's personal files
-    removeDuplicatesFromArray();
-    updateCycles(rc);   //adds new cycles if needed
+    removeDuplicatesFromArray();  //removes update-duplicates from the array
+    updateCycles();   //adds new cycles if needed
     storageToArray(rc); //posts the next cycle of data (if any)
     
     //printArrayData(rc);
@@ -172,21 +172,27 @@ public class Headquarters extends Robot {
     }
   }
   //looks at all storage types and sees if any of them needs a new cycle
-  private void updateCycles(RobotController rc) throws GameActionException{
-    if(updateIslandCycles(rc)){
-      addEmptyCycle(islands,rc.getRoundNum());
+  private void updateCycles(){
+    if(updateIslandCycles()){
+      int[][] temp=new int[islands.length+1][ISLANDSTORAGELENGTH];
+      System.arraycopy(islands, 0, temp, 0, islands.length);
+      islands=temp;
     }
-    if(updateImpassableCycles(rc)){
-      addEmptyCycle(impassables,rc.getRoundNum());
+    if(updateImpassableCycles()){
+      int[][] temp=new int[impassables.length+1][IMPASSABLESTORAGELENGTH];
+      System.arraycopy(impassables, 0, temp, 0, impassables.length);
+      impassables=temp;
     }
-    if(updateWellCycles(rc)){
-      addEmptyCycle(wells,rc.getRoundNum());
+    if(updateWellCycles()){
+      int[][] temp=new int[wells.length+1][WELLSTORAGELENGTH];
+      System.arraycopy(wells,0,temp,0,wells.length);
+      wells=temp;
     }
   }
   //returns true if Island storage needs a new cycle
-  private boolean updateIslandCycles(RobotController rc) throws GameActionException{
+  private boolean updateIslandCycles(){
     for(int i=0;i<ISLANDSTORAGELENGTH;++i){
-      if(rc.readSharedArray(i)==0){ //if any slot is empty
+      if(islands[islands.length-1][i]==0){ //if any slot is empty
         return false;               //no new cycle is needed
       }
     }
@@ -194,41 +200,22 @@ public class Headquarters extends Robot {
   }
 
   //returns true if Impassable storage needs a new cycle
-  private boolean updateImpassableCycles(RobotController rc) throws GameActionException{
+  private boolean updateImpassableCycles(){
     for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){
-      if(rc.readSharedArray(i+ISLANDSTORAGELENGTH)==0){ //if any slot is empty
+      if(impassables[impassables.length-1][i]==0){ //if any slot is empty
         return false;                                   //no new cycle is needed
       }
     }
     return true;  //a new cycle is needed (no empty slots)
   }
   //returns true if Well storage needs a new cycle
-  private boolean updateWellCycles(RobotController rc) throws GameActionException{
+  private boolean updateWellCycles(){
     for(int i=0;i<WELLSTORAGELENGTH;++i){
-      if(rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH)==0){ //if any slot is empty
+      if(wells[wells.length-1][i]==0){ //if any slot is empty
         return false;               //no new cycle is needed
       }
     }
     return true;  //a new cycle is needed (no empty slots)
-  }
-
-  //adds an empty cycle to one of the storages
-  //hopefully this doesn't take a billion bytecode
-  private void addEmptyCycle(int[][] storage,int roundNum){ //note: cuz this is java, this passes by reference
-    int[][] temp=new int[storage.length+1][storage[0].length];
-    int storageIndex=0;
-    //makes sure to display the empty cycle on this turn
-    for(int i=0;i<storage.length;++i){
-      if(roundNum%(storage.length+1)==i){//
-        //add in the empty cycle
-        temp[i]=new int[storage[0].length];
-      }else{
-        //copies over the previous values
-        temp[i]=storage[storageIndex];
-        storageIndex++;
-      }
-    }
-    storage=temp;
   }
 
   private void storageToArray(RobotController rc) throws GameActionException{
@@ -265,18 +252,9 @@ public class Headquarters extends Robot {
     for(int i=0;i<islands.length;++i){
       for(int j=0;j<ISLANDSTORAGELENGTH;++j){
         if(islands[i][j]!=0){
-          int k=i;
-          int l=j+1;
-          if(j==ISLANDSTORAGELENGTH-1){
-            if(i==islands.length-1){//last element (nothing to compare it to)
-              return;
-            }
-            k=i+1;
-            l=0;
-          }
-          for(;k<islands.length;++k){
-            for(;l<ISLANDSTORAGELENGTH;++l){
-              if(islands[k][l]!=0&&(islands[i][j]%4096)==(islands[k][l]%4096)){//duplicate entries
+          for(int k=i;k<islands.length;++k){
+            for(int l=0;l<ISLANDSTORAGELENGTH;++l){
+              if((i!=k||j!=l)&&islands[k][l]!=0&&(islands[i][j]%4096)==(islands[k][l]%4096)){//duplicate entries
                 islands[i][j]=islands[k][l];  //put the new entry in the original slot
                 islands[k][l]=0;  //clear the new slot
               }
@@ -291,19 +269,15 @@ public class Headquarters extends Robot {
     //luckily, we don't have to do this for impassables (since they can't be updated)
     for(int i=0;i<wells.length;++i){
       for(int j=0;j<WELLSTORAGELENGTH;++j){
+        //System.out.println("Looking at ("+wells[i][j]%4096%20+","+wells[i][j]%4096/20+")");
         if(wells[i][j]!=0){
-          int k=i;
-          int l=j+1;
-          if(j==WELLSTORAGELENGTH-1){
-            if(i==wells.length-1){//last element (nothing to compare it to)
-              return;
-            }
-            k=i+1;
-            l=0;
-          }
-          for(;k<wells.length;++k){
-            for(;l<WELLSTORAGELENGTH;++l){
-              if(wells[k][l]!=0&&(wells[i][j]%4096)==(wells[k][l]%4096)){//duplicate entries
+          for(int k=i;k<wells.length;++k){
+            for(int l=0;l<WELLSTORAGELENGTH;++l){
+              //System.out.println("comparing with  ("+wells[k][l]%4096%20+","+wells[k][l]%4096/20+")");
+              //System.out.println("from ("+k+","+l+")");
+              if((i!=k||j!=l)&&wells[k][l]!=0&&(wells[i][j]%4096)==(wells[k][l]%4096)){//duplicate entries
+                //System.out.println("removed duplicate: ("+wells[i][j]%4096%20+","+wells[i][j]%4096/20+") ("+wells[k][l]%4096%20+","+wells[k][l]%4096/20+")");
+                //System.out.println("from ("+i+","+j+")"+" and ("+k+","+l+")");
                 wells[i][j]=wells[k][l];  //put the new entry in the original slot
                 wells[k][l]=0;  //clear the new slot
               }
@@ -312,6 +286,7 @@ public class Headquarters extends Robot {
         }
       }
     }
+    //System.out.println("------------------------------");
   }
   
   //remove empty "bubbles" from the shared array (empty space should only be at the end of the array)
