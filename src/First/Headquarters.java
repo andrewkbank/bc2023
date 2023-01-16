@@ -36,12 +36,14 @@ public class Headquarters extends Robot {
     //todo: anchors
     if(first_turn){//on the first turn look at the entire surrounding
       updatePersonalMapFull(rc);
+      writeSharedArray(rc);
       first_turn=false;
     }
 
     //these three methods handle the cycling of data in the shared array
     //they DO NOT write the HQ's personal findings to the array
     arrayToStorage(rc); //takes data from the shared array and stores it in HQ's personal files
+    removeDuplicatesFromArray();
     updateCycles(rc);   //adds new cycles if needed
     storageToArray(rc); //posts the next cycle of data (if any)
     
@@ -243,6 +245,146 @@ public class Headquarters extends Robot {
     if(wells.length>1){//update wells
       for(int i=0;i<WELLSTORAGELENGTH;++i){
         rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,wells[rc.getRoundNum()%wells.length][i]);
+      }
+    }
+  }
+
+  //when islands and wells get updated, they're added as new entries instead of having previous entries modified
+  //the hq will be in charge of removing the old entries
+  private void removeDuplicatesFromArray(){
+    removeIslandDuplicates();
+    removeWellDuplicates();
+    //once duplicates are removed, pack down the array
+    //in other words, get rid of the empty "bubbles" that result from removing items in the array
+    packDownIslandArray();
+    packDownWellArray();
+  }
+  private void removeIslandDuplicates(){
+    //we can achieve this by comparing each entry to every other entry
+    //luckily, we don't have to do this for impassables (since they can't be updated)
+    for(int i=0;i<islands.length;++i){
+      for(int j=0;j<ISLANDSTORAGELENGTH;++j){
+        if(islands[i][j]!=0){
+          int k=i;
+          int l=j+1;
+          if(j==ISLANDSTORAGELENGTH-1){
+            if(i==islands.length-1){//last element (nothing to compare it to)
+              return;
+            }
+            k=i+1;
+            l=0;
+          }
+          for(;k<islands.length;++k){
+            for(;l<ISLANDSTORAGELENGTH;++l){
+              if(islands[k][l]!=0&&(islands[i][j]%4096)==(islands[k][l]%4096)){//duplicate entries
+                islands[i][j]=islands[k][l];  //put the new entry in the original slot
+                islands[k][l]=0;  //clear the new slot
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  private void removeWellDuplicates(){
+    //we can achieve this by comparing each entry to every other entry
+    //luckily, we don't have to do this for impassables (since they can't be updated)
+    for(int i=0;i<wells.length;++i){
+      for(int j=0;j<WELLSTORAGELENGTH;++j){
+        if(wells[i][j]!=0){
+          int k=i;
+          int l=j+1;
+          if(j==WELLSTORAGELENGTH-1){
+            if(i==wells.length-1){//last element (nothing to compare it to)
+              return;
+            }
+            k=i+1;
+            l=0;
+          }
+          for(;k<wells.length;++k){
+            for(;l<WELLSTORAGELENGTH;++l){
+              if(wells[k][l]!=0&&(wells[i][j]%4096)==(wells[k][l]%4096)){//duplicate entries
+                wells[i][j]=wells[k][l];  //put the new entry in the original slot
+                wells[k][l]=0;  //clear the new slot
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  //remove empty "bubbles" from the shared array (empty space should only be at the end of the array)
+  private void packDownIslandArray(){
+    //note: probably could make more efficient from returning the "bubble" locations from removeIslandDuplicates
+    //another note, we run this only after we remove duplicates first,
+    //so each items location in the array doesn't matter
+    int i=0;
+    int j=0;
+    int lastI=islands.length-1;
+    int lastJ=ISLANDSTORAGELENGTH-1;
+    while(i<lastI&&j<lastJ){
+      while(islands[i][j]!=0){//increment position in the island array by 1
+        ++j;
+        if(j>=ISLANDSTORAGELENGTH){
+          ++i;
+          j=0;
+          if(i>=islands.length){//full array, no bubbles
+            return;
+          }
+        }
+      }
+      while(islands[lastI][lastJ]==0){//decrement position in the island array by 1
+        --lastJ;
+        if(lastJ<=0){
+          --lastI;
+          lastJ=ISLANDSTORAGELENGTH-1;
+          if(lastI<=0){//empty array, no bubbles
+            return;
+          }
+        }
+      }
+      //if lastI,lastJ and i,j aren't consecutive, there's a bubble
+      if(!((lastI==i&&(lastJ+1)==j)||((lastI+1)==i&&j==0&&lastJ==(ISLANDSTORAGELENGTH-1)))){
+        islands[i][j]=islands[lastI][lastJ];
+        islands[lastI][lastJ]=0;
+      }
+    }
+  }
+  //remove empty "bubbles" from the shared array (empty space should only be at the end of the array)
+  private void packDownWellArray(){
+    //note: probably could make more efficient from returning the "bubble" locations from removeIslandDuplicates
+    //another note, we run this only after we remove duplicates first,
+    //so each items location in the array doesn't matter
+    int i=0;
+    int j=0;
+    int lastI=wells.length-1;
+    int lastJ=WELLSTORAGELENGTH-1;
+    while(i<lastI&&j<lastJ){
+      while(wells[i][j]!=0){//increment position in the island array by 1
+        ++j;
+        if(j>=WELLSTORAGELENGTH){
+          ++i;
+          j=0;
+          if(i>=wells.length){//full array, no bubbles
+            return;
+          }
+        }
+      }
+      while(wells[lastI][lastJ]==0){//decrement position in the island array by 1
+        --lastJ;
+        if(lastJ<=0){
+          --lastI;
+          lastJ=WELLSTORAGELENGTH-1;
+          if(lastI<=0){//empty array, no bubbles
+            return;
+          }
+        }
+      }
+      //if lastI,lastJ and i,j aren't consecutive, there's a bubble
+      if(!((lastI==i&&(lastJ+1)==j)||((lastI+1)==i&&j==0&&lastJ==(WELLSTORAGELENGTH-1)))){
+        wells[i][j]=wells[lastI][lastJ];
+        wells[lastI][lastJ]=0;
       }
     }
   }
