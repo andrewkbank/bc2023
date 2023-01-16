@@ -17,14 +17,14 @@ public class Headquarters extends Robot {
 
   //stuff I stole from examplefuncsplayer
   static final Direction[] directions = {
-      Direction.NORTH,
-      Direction.NORTHEAST,
-      Direction.EAST,
-      Direction.SOUTHEAST,
-      Direction.SOUTH,
-      Direction.SOUTHWEST,
-      Direction.WEST,
-      Direction.NORTHWEST,
+    Direction.NORTH,
+    Direction.NORTHEAST,
+    Direction.EAST,
+    Direction.SOUTHEAST,
+    Direction.SOUTH,
+    Direction.SOUTHWEST,
+    Direction.WEST,
+    Direction.NORTHWEST,
   };
   static final Random rng = new Random(6147);
   private static boolean first_turn;
@@ -46,7 +46,7 @@ public class Headquarters extends Robot {
     removeDuplicatesFromArray();
     updateCycles(rc);   //adds new cycles if needed
     storageToArray(rc); //posts the next cycle of data (if any)
-
+    
     //printArrayData(rc);
 
     //tries to build a unit
@@ -168,7 +168,7 @@ public class Headquarters extends Robot {
       impassables[(rc.getRoundNum()-1)%impassables.length][i]=rc.readSharedArray(i+ISLANDSTORAGELENGTH);
     }
     for(int i=0;i<WELLSTORAGELENGTH;++i){
-      wells[(rc.getRoundNum()-1)%wells.length][i]=rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH);
+      wells[(rc.getRoundNum()-1)%wells.length][i]=rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH);    
     }
   }
   //looks at all storage types and sees if any of them needs a new cycle
@@ -313,7 +313,7 @@ public class Headquarters extends Robot {
       }
     }
   }
-
+  
   //remove empty "bubbles" from the shared array (empty space should only be at the end of the array)
   private void packDownIslandArray(){
     //note: probably could make more efficient from returning the "bubble" locations from removeIslandDuplicates
