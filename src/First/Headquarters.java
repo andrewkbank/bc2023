@@ -47,7 +47,7 @@ public class Headquarters extends Robot {
     updateCycles(rc);   //adds new cycles if needed
     storageToArray(rc); //posts the next cycle of data (if any)
     
-    rc.setIndicatorString("islands: "+islands[0][0]+" impassables: "+impassables[0][0]+" wells: "+wells[0][0]);
+    //printArrayData(rc);
 
     //tries to build a unit
     build(rc);
@@ -397,5 +397,26 @@ public class Headquarters extends Robot {
       }
     }
     return false;
+  }
+
+  private void printArrayData(RobotController rc) throws GameActionException{
+    System.out.println("Islands:");
+    for(int i=0;i<islands.length;++i){
+      for(int j=0;j<ISLANDSTORAGELENGTH;++j){
+        System.out.println("  Team "+islands[i][j]/4096+" ("+islands[i][j]%4096%rc.getMapWidth()+","+islands[i][j]%4096/rc.getMapWidth()+") ");
+      }
+    }
+    System.out.println("Impassables:");
+    for(int i=0;i<impassables.length;++i){
+      for(int j=0;j<IMPASSABLESTORAGELENGTH;++j){
+        System.out.println("  ("+impassables[i][j]%4096%rc.getMapWidth()+","+impassables[i][j]%4096/rc.getMapWidth()+") ");
+      }
+    }
+    System.out.println("Wells:");
+    for(int i=0;i<wells.length;++i){
+      for(int j=0;j<WELLSTORAGELENGTH;++j){
+        System.out.println("  Type "+wells[i][j]/4096+" ("+wells[i][j]%4096%rc.getMapWidth()+","+wells[i][j]%4096/rc.getMapWidth()+") ");
+      }
+    }
   }
 }
