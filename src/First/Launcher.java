@@ -113,6 +113,13 @@ public class Launcher extends Robot {
         return rc.getLocation().directionTo(leaderFriend.getLocation());
       }
     }
+    //get out of the way of carriers with anchors
+    RobotInfo[] adjacentAllies=rc.senseNearbyRobots(2,rc.getTeam());
+    for(int i=0;i<adjacentAllies.length;++i){
+      if(adjacentAllies[i].getTotalAnchors()>0){
+        return adjacentAllies[i].getLocation().directionTo(rc.getLocation());
+      }
+    }
     //move towards islands
     int[] islands=rc.senseNearbyIslands();
     if(islands.length>0){

@@ -219,17 +219,17 @@ public class Headquarters extends Robot {
   }
 
   private void storageToArray(RobotController rc) throws GameActionException{
-    if(islands.length>1){//update islands
+    if(islands.length>=1){//update islands
       for(int i=0;i<ISLANDSTORAGELENGTH;++i){
         rc.writeSharedArray(i,islands[rc.getRoundNum()%islands.length][i]);
       }
     }
-    if(impassables.length>1){//update impassables
+    if(impassables.length>=1){//update impassables
       for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){
         rc.writeSharedArray(i+ISLANDSTORAGELENGTH,impassables[rc.getRoundNum()%impassables.length][i]);
       }
     }
-    if(wells.length>1){//update wells
+    if(wells.length>=1){//update wells
       for(int i=0;i<WELLSTORAGELENGTH;++i){
         rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,wells[rc.getRoundNum()%wells.length][i]);
       }
@@ -375,7 +375,7 @@ public class Headquarters extends Robot {
   }
 
   private void printArrayData(RobotController rc) throws GameActionException{
-    System.out.println("Islands:");
+    //System.out.println("Islands:");
     for(int i=0;i<islands.length;++i){
       for(int j=0;j<ISLANDSTORAGELENGTH;++j){
         System.out.println("  Team "+islands[i][j]/4096+" ("+islands[i][j]%4096%rc.getMapWidth()+","+islands[i][j]%4096/rc.getMapWidth()+") ");
@@ -393,5 +393,6 @@ public class Headquarters extends Robot {
         System.out.println("  Type "+wells[i][j]/4096+" ("+wells[i][j]%4096%rc.getMapWidth()+","+wells[i][j]%4096/rc.getMapWidth()+") ");
       }
     }
+    System.out.println("----------");
   }
 }
