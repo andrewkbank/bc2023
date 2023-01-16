@@ -25,6 +25,7 @@ public class Carrier extends Robot {
     hqLoc = null;
     hasAnchor = false;
     nearestIslandLoc = null;
+    nearestNeutralIsland = null;
   }
 
   public void run(RobotController rc) throws GameActionException {
@@ -35,7 +36,7 @@ public class Carrier extends Robot {
 //      scanIslands(rc);
 //    }
     if (nearestNeutralIsland == null) {
-      this.getNearestIsland(rc);
+      getNearestIsland(rc);
     }
 
     //read and write to shared array
@@ -47,16 +48,30 @@ public class Carrier extends Robot {
     //TODO: change this around later to account for both standard and accel anchors
     if (rc.canTakeAnchor(hqLoc, Anchor.STANDARD)) {
       rc.takeAnchor(hqLoc, Anchor.STANDARD);
+      System.out.println("anchor taken");
       hasAnchor = true;
     }
 
     if (hasAnchor) {
-      if (nearestIslandLoc == null) {
-        moveRandom(rc);
-      } else {
-//        Direction[] islandDirs = pathfindCarrier(rc, nearestIslandLoc);
+      getNearestIsland(rc);
+
+      if (nearestNeutralIsland == null) {
+        rc.setIndicatorString("pathfinding to HQ");
+        Direction[] hqDirs = pathfindCarrier(rc, hqLoc);
+        moveToward(rc, hqDirs);
+      }
+      else {
+        Direction[] islandDirs = pathfindCarrier(rc, nearestNeutralIsland);
+        rc.setIndicatorString("pathfinding to x: " + nearestNeutralIsland.x + " y: " + nearestNeutralIsland.y);
+        moveToward(rc, islandDirs);
+        if (rc.canPlaceAnchor()) {
+          System.out.println("anchor placed");
+          rc.placeAnchor();
+          hasAnchor = false;
+        }
       }
     }
+
     else {
       if (!well_found) {
         nearby_wells = rc.senseNearbyWells();
@@ -87,32 +102,35 @@ public class Carrier extends Robot {
           }
         }
       }
-    }
-    //rc.setIndicatorString("Bytecode used before movement: "+Clock.getBytecodeNum());
-    Direction[] go = getMove(rc);
-    int moveNum = 0;
-    while (rc.isMovementReady()) {//handles multiple movements in one turn
-      updatePersonalMap(rc);
-      if (go[moveNum] == Direction.CENTER) {
-        break;
-      }
-      if (rc.canMove(go[moveNum])) {
-        rc.move(go[moveNum]);
-      } else if (rc.canMove(go[moveNum].rotateRight())) {
-        rc.move(go[moveNum].rotateRight());
-      } else if (rc.canMove(go[moveNum].rotateLeft())) {
-        rc.move(go[moveNum].rotateLeft());
-      } else if (rc.canMove(go[moveNum].opposite())) {
-        rc.move(go[moveNum].opposite());
-      } else {
-        break;
-      }
-      if (rc.canPlaceAnchor()) { // need to check if it is already occupied
-        rc.placeAnchor();
-        hasAnchor = false;
-      }
-      if (moveNum == 0) {
-        moveNum = 1;
+
+      //rc.setIndicatorString("Bytecode used before movement: "+Clock.getBytecodeNum());
+      Direction[] go = getMove(rc);
+      int moveNum = 0;
+      while (rc.isMovementReady()) {//handles multiple movements in one turn
+        updatePersonalMap(rc);
+        if (go[moveNum] == Direction.CENTER) {
+          break;
+        }
+        if (rc.canMove(go[moveNum])) {
+          rc.move(go[moveNum]);
+        } else if (rc.canMove(go[moveNum].rotateRight())) {
+          rc.move(go[moveNum].rotateRight());
+        } else if (rc.canMove(go[moveNum].rotateLeft())) {
+          rc.move(go[moveNum].rotateLeft());
+        } else if (rc.canMove(go[moveNum].opposite())) {
+          rc.move(go[moveNum].opposite());
+        } else {
+          break;
+        }
+//      if (rc.canPlaceAnchor()) { // need to check if it is already occupied
+//        rc.placeAnchor();
+//        hasAnchor = false;
+//        this.getNearestIsland(rc);
+//
+//      }
+        if (moveNum == 0) {
+          moveNum = 1;
+        }
       }
     }
   }
@@ -269,19 +287,21 @@ public class Carrier extends Robot {
     }
   }
 
+  //TODO: need to test this method
   private void getNearestIsland(RobotController rc) throws GameActionException {
-    int closestDist = Integer.MIN_VALUE;
+    int closestDist = Integer.MAX_VALUE;
     for (int i = 0; i < 9; i++) {
       int sharedArrayValue = rc.readSharedArray(i);
-      // checks if it is a neutral island (not our team and not other team)
-      if (((sharedArrayValue & 0b001000000000000) < 1) && ((sharedArrayValue & 0b010000000000000) < 1)) {
-        int locationValue = sharedArrayValue;
-        if (locationValue >= Math.pow(2, 14)) {
-          locationValue = (int) (locationValue - Math.pow(2,14));
-        }
+      if (sharedArrayValue != 0) {
+//        System.out.println("shared array value: " + sharedArrayValue);
+        // checks if it is a neutral island (not our team and not other team)
+        int locationValue = sharedArrayValue % 4096;
+//        System.out.println("location value: " + locationValue);
 
         int x = locationValue % rc.getMapWidth();
-        int y = (locationValue - x) / rc.getMapWidth();
+//        System.out.println("x: " + x);
+        int y = locationValue / rc.getMapWidth();
+//        System.out.println("y: " + y);
 
         MapLocation neutralIsland = new MapLocation(x, y);
         int dist = rc.getLocation().distanceSquaredTo(neutralIsland);
@@ -291,6 +311,41 @@ public class Carrier extends Robot {
         }
       }
     }
+
+
   }
+
+  private void moveToward(RobotController rc, Direction[] directions) throws GameActionException {
+    while (rc.isMovementReady()) {
+      int moveNum = 0;
+      while (rc.isMovementReady()) {//handles multiple movements in one turn
+        updatePersonalMap(rc);
+        if (directions[moveNum] == Direction.CENTER) {
+          break;
+        }
+        if (rc.canMove(directions[moveNum])) {
+          rc.move(directions[moveNum]);
+        } else if (rc.canMove(directions[moveNum].rotateRight())) {
+          rc.move(directions[moveNum].rotateRight());
+        } else if (rc.canMove(directions[moveNum].rotateLeft())) {
+          rc.move(directions[moveNum].rotateLeft());
+        } else if (rc.canMove(directions[moveNum].opposite())) {
+          rc.move(directions[moveNum].opposite());
+        } else {
+          break;
+        }
+//      if (rc.canPlaceAnchor()) { // need to check if it is already occupied
+//        rc.placeAnchor();
+//        hasAnchor = false;
+//        this.getNearestIsland(rc);
+//
+//      }
+        if (moveNum == 0) {
+          moveNum = 1;
+        }
+      }
+    }
+  }
+
 
 }
