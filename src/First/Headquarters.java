@@ -33,13 +33,14 @@ public class Headquarters extends Robot {
     first_turn = true;
   }
   public void run(RobotController rc) throws GameActionException {
-    //todo: anchors
+    //tries to build a unit
+    build(rc);
+    
     if(first_turn){//on the first turn look at the entire surrounding
       updatePersonalMapFull(rc);
       writeSharedArray(rc);
       first_turn=false;
     }
-
     //these three methods handle the cycling of data in the shared array
     //they DO NOT write the HQ's personal findings to the array
     arrayToStorage(rc); //takes data from the shared array and stores it in HQ's personal files
@@ -48,9 +49,6 @@ public class Headquarters extends Robot {
     storageToArray(rc); //posts the next cycle of data (if any)
     
     //printArrayData(rc);
-
-    //tries to build a unit
-    build(rc);
   }
 
   //builds units
