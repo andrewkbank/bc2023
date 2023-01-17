@@ -60,6 +60,7 @@ public abstract class Robot {
     Direction.WEST,
     Direction.NORTHWEST,
   };
+  protected static Random rng;
   public Robot(RobotController rc) throws GameActionException{
     //initialize map on robot creation
     map=new int[rc.getMapHeight()*rc.getMapWidth()];
@@ -76,6 +77,7 @@ public abstract class Robot {
     islandQueue=new LinkedList<Integer>();
     impassableQueue=new LinkedList<Integer>();
     wellQueue=new LinkedList<Integer>();
+    rng=new Random(rc.getRoundNum());
   }
 
   // Every subclass must define their own run function.
@@ -110,13 +112,16 @@ public abstract class Robot {
   }
   //dfs
   public Direction pathfind(RobotController rc, MapLocation goal) throws GameActionException{
+    if(goal.equals(rc.getLocation())){return Direction.CENTER;}
+    int bytecodeBefore=Clock.getBytecodeNum();
     LinkedList<MapLocation> stack=new LinkedList<MapLocation>();
-    int[] discovered=new int[rc.getMapHeight()*rc.getMapWidth()];
-    stack.push(rc.getLocation());
+    boolean[] discovered=new boolean[rc.getMapHeight()*rc.getMapWidth()];
+    stack.push(goal);
     while(!stack.isEmpty()){  //while loop that runs dfs
+      rc.setIndicatorDot(stack.peek(),100,0,0);
       MapLocation m=stack.pop();
-      if(discovered[m.y*rc.getMapWidth()+m.x]==0){
-        discovered[m.y*rc.getMapWidth()+m.x]=1;
+      if(!discovered[m.y*rc.getMapWidth()+m.x]){
+        discovered[m.y*rc.getMapWidth()+m.x]=true;
         Direction dirToGoal=rc.getLocation().directionTo(m);
         Direction[] pushOrder={//this is the priority order that we add stuff to the dfs queue
           dirToGoal,
@@ -129,22 +134,27 @@ public abstract class Robot {
           dirToGoal.opposite(),
 
         };
+        int before=0;
         for(int i=0;i<8;++i){//go through the priority order
           MapLocation toPush=m.add(pushOrder[i]);
-          if(toPush.x>=0&&toPush.y>=0&&toPush.x<rc.getMapWidth()&&toPush.y<rc.getMapHeight()){//inbounds
-            if(map[toPush.y*rc.getMapWidth()+toPush.x]!=1){//passable
-              if(toPush==goal){ //break if you find the destination
-                return pushOrder[i].opposite();
-              }
-              stack.push(m.add(pushOrder[i])); //and add them all to the stack
+          int locVal=toPush.y*rc.getMapWidth()+toPush.x;
+          if(rc.onTheMap(toPush)&&map[locVal]!=1&&!discovered[locVal]){
+            //inbounds, passable, and not yet discovered by dfs
+            if(toPush.equals(rc.getLocation())){ //break if you find the destination
+              rc.setIndicatorString("DFS to "+goal+" success, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
+              return pushOrder[i].opposite();
             }
+            stack.push(m.add(pushOrder[i])); //and add them all to the stack
+            rc.setIndicatorDot(m.add(pushOrder[i]),0,100,0);
           }
         }
+        //rc.setIndicatorString("for bytecode: "+(Clock.getBytecodeNum()-bytecodeBefore));
       }
+      bytecodeBefore=Clock.getBytecodeNum();
     }
+    rc.setIndicatorString("DFS to "+goal+" failed, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
     //backup (in case dfs doesn't work)
     return rc.getLocation().directionTo(goal);
-
   }
   //returns a list of MapLocations that make up the edge of the robot's vision (assumes 20 vision)
   private MapLocation[] getEdgeMapLocations(RobotController rc,Direction dir) throws GameActionException{
@@ -446,8 +456,7 @@ public abstract class Robot {
   }
 
   public void moveRandom(RobotController rc) throws GameActionException {
-    Random random = new Random();
-    Direction direction = directions[random.nextInt(directions.length)];
+    Direction direction = directions[rng.nextInt(directions.length)];
 
     if (rc.canMove(direction)) {
       rc.move(direction);
@@ -466,5 +475,8 @@ public abstract class Robot {
         rc.move(Direction.CENTER);
       }
     }
+  }
+  public MapLocation getRandomLoc(RobotController rc) throws GameActionException{
+    return new MapLocation(rng.nextInt(rc.getMapWidth()),rng.nextInt(rc.getMapHeight()));
   }
 }

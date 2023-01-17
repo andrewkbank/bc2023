@@ -1,22 +1,12 @@
 package First;
 
-import java.util.Random;
 import battlecode.common.*;
 
 public class Launcher extends Robot {
-  static final Random rng = new Random(69);
-  static final Direction[] directions = {
-    Direction.NORTH,
-    Direction.NORTHEAST,
-    Direction.EAST,
-    Direction.SOUTHEAST,
-    Direction.SOUTH,
-    Direction.SOUTHWEST,
-    Direction.WEST,
-    Direction.NORTHWEST,
-};
+  private MapLocation randomLoc=null;
   public Launcher(RobotController rc) throws GameActionException{
     super(rc);
+    randomLoc=getRandomLoc(rc);
   }
   public void run(RobotController rc) throws GameActionException {
     attack(rc);
@@ -126,6 +116,10 @@ public class Launcher extends Robot {
       return pathfind(rc,rc.senseNearbyIslandLocations(islands[rng.nextInt(islands.length)])[0]);
     }
     // Default: move randomly
-    return directions[rng.nextInt(directions.length)];
+    if (rc.getLocation().equals(randomLoc)||(rc.canSenseLocation(randomLoc)&&!rc.senseMapInfo(randomLoc).isPassable())) {
+      randomLoc=getRandomLoc(rc);
+      System.out.println("lol");
+    }
+    return pathfind(rc,randomLoc);
   }
 }
