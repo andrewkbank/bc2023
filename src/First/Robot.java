@@ -83,34 +83,7 @@ public abstract class Robot {
 
   // Every subclass must define their own run function.
   public abstract void run(RobotController rc) throws GameActionException;
-/*
-  These aren't actually useful, but its nice to have them as reference
-  public int mapLocationToInt(MapLocation m){
-    return m.y*mapWidth+m.x;
-  }
-  public char mapLocationToChar(MapLocation m){
-    return (char)(m.y*mapWidth+m.x);
-  }
-  public MapLocation intToMapLocation(int i){
-    return new MapLocation(i%mapWidth,i/mapWidth);
-  }
-  public MapLocation charToMapLocation(char c){
-    return new MapLocation(((int)c)%mapWidth,((int)c)/mapWidth);
-  }
-  public int intPlusDirection(int m,Direction d){
-    return m+mapWidth*d.dy+d.dx;
-  }
-  public char charPlusDirection(char m,Direction d){
-    return (char)((int)m+mapWidth*d.dy+d.dx);
-  }
-  //see the directions array for the order
-  public int directionToInt(Direction d){
-    return 3*(d.dy+1)+d.dx+1;
-  }
-  public char directionToChar(Direction d){
-    return (char)(3*(d.dy+1)+d.dx+1);
-  }
-  */
+
   public Direction makeDir(int dx, int dy) {
     if (dx == -1) {
       if (dy == -1)   { return Direction.SOUTHWEST; }
