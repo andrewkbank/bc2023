@@ -48,7 +48,7 @@ public class Headquarters extends Robot {
     updateCycles();   //adds new cycles if needed
     storageToArray(rc); //posts the next cycle of data (if any)
     
-    //printArrayData(rc);
+    printArrayData(rc);
   }
 
   //builds units
@@ -65,13 +65,13 @@ public class Headquarters extends Robot {
       }
       //gets priority queue of locations to build at (its 29 long)
       MapLocation[] actionLocations=getActionLocations(rc,null);
-      for(int i=0;i<actionLocations.length;++i){
-        rc.setIndicatorDot(actionLocations[i],100,0,0);
-      }
+      //for(int i=0;i<actionLocations.length;++i){
+        //rc.setIndicatorDot(actionLocations[i],100,0,0);
+      //}
       //tries building at each of those locations
       for(int i=0;i<actionLocations.length;++i){
-        if (rc.canBuildRobot(RobotType.DESTABILIZER, actionLocations[i])) {
-          rc.buildRobot(RobotType.DESTABILIZER, actionLocations[i]);
+        if (rc.canBuildRobot(RobotType.AMPLIFIER, actionLocations[i])) {
+          rc.buildRobot(RobotType.AMPLIFIER, actionLocations[i]);
           break;
         }
         else if (rc.canBuildRobot(RobotType.CARRIER, actionLocations[i]) && (num_Carriers < 5 || num_Carriers < 1.5*num_Launchers) && (num_Carriers < 60)) {
@@ -376,21 +376,33 @@ public class Headquarters extends Robot {
     //System.out.println("Islands:");
     for(int i=0;i<islands.length;++i){
       for(int j=0;j<ISLANDSTORAGELENGTH;++j){
-        System.out.println("  Team "+islands[i][j]/4096+" ("+islands[i][j]%4096%rc.getMapWidth()+","+islands[i][j]%4096/rc.getMapWidth()+") ");
+        //System.out.println("  Team "+islands[i][j]/4096+" ("+islands[i][j]%4096%rc.getMapWidth()+","+islands[i][j]%4096/rc.getMapWidth()+") ");
+        if(islands[i][j]/4096==0){
+          rc.setIndicatorDot(new MapLocation(islands[i][j]%4096%rc.getMapWidth(),islands[i][j]%4096/rc.getMapWidth()),255,0,0);
+        }else{
+          rc.setIndicatorDot(new MapLocation(islands[i][j]%4096%rc.getMapWidth(),islands[i][j]%4096/rc.getMapWidth()),0,0,255);
+        }
       }
     }
-    System.out.println("Impassables:");
+    //System.out.println("Impassables:");
     for(int i=0;i<impassables.length;++i){
       for(int j=0;j<IMPASSABLESTORAGELENGTH;++j){
-        System.out.println("  ("+impassables[i][j]%4096%rc.getMapWidth()+","+impassables[i][j]%4096/rc.getMapWidth()+") ");
+        //System.out.println("  ("+impassables[i][j]%4096%rc.getMapWidth()+","+impassables[i][j]%4096/rc.getMapWidth()+") ");
+        rc.setIndicatorDot(new MapLocation(impassables[i][j]%4096%rc.getMapWidth(),impassables[i][j]%4096/rc.getMapWidth()),10,10,10);
       }
     }
-    System.out.println("Wells:");
+    //System.out.println("Wells:");
     for(int i=0;i<wells.length;++i){
       for(int j=0;j<WELLSTORAGELENGTH;++j){
-        System.out.println("  Type "+wells[i][j]/4096+" ("+wells[i][j]%4096%rc.getMapWidth()+","+wells[i][j]%4096/rc.getMapWidth()+") ");
+        //System.out.println("  Type "+wells[i][j]/4096+" ("+wells[i][j]%4096%rc.getMapWidth()+","+wells[i][j]%4096/rc.getMapWidth()+") ");
+        if(wells[i][j]/4096==0){
+          rc.setIndicatorDot(new MapLocation(wells[i][j]%4096%rc.getMapWidth(),wells[i][j]%4096/rc.getMapWidth()),100,100,100);
+        }else{
+          rc.setIndicatorDot(new MapLocation(wells[i][j]%4096%rc.getMapWidth(),wells[i][j]%4096/rc.getMapWidth()),255,0,255);
+
+        }
       }
     }
-    System.out.println("----------");
+    //System.out.println("----------");
   }
 }

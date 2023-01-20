@@ -43,9 +43,12 @@ public abstract class Robot {
    */
   protected int[] map;
   //these queues are the new info the bot has found and needs to upload to the shared array
-  protected LinkedList<Integer> islandQueue;
-  protected LinkedList<Integer> impassableQueue;
-  protected LinkedList<Integer> wellQueue;
+  protected String islandQueueTentative="";
+  protected String impassableQueueTentative="";
+  protected String wellQueueTentative="";
+  protected String islandQueue="";
+  protected String impassableQueue="";
+  protected String wellQueue="";
 
   private MapLocation loc;
   
@@ -75,9 +78,6 @@ public abstract class Robot {
         if (r.type == RobotType.HEADQUARTERS) { hqInfo = r; break; }
       }
     }
-    islandQueue=new LinkedList<Integer>();
-    impassableQueue=new LinkedList<Integer>();
-    wellQueue=new LinkedList<Integer>();
     rng=new Random(rc.getRoundNum());
   }
 
@@ -145,7 +145,7 @@ public abstract class Robot {
           if(toPush>0&&toPush<(rc.getMapWidth()*rc.getMapHeight())&&map[toPush]!=1/*&&onesDigit>0&&onesDigit<10*/){  //16 bytecode (used to be 21)
             //inbounds and passable
             if(toPush==rc.getLocation().y*rc.getMapWidth()+rc.getLocation().x){ //13 bytecode
-              rc.setIndicatorString("DFS to "+goal+" success, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
+              //rc.setIndicatorString("DFS to "+goal+" success, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
               //Direction[] toReturn={pushOrder[i].opposite(),directions[(int)path]};
               return pushOrder[i].opposite();
             }
@@ -157,7 +157,7 @@ public abstract class Robot {
       }
       //bytecodeBefore=Clock.getBytecodeNum();
     }
-    rc.setIndicatorString("DFS to "+goal+" failed, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
+    //rc.setIndicatorString("DFS to "+goal+" failed, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
     //backup (in case dfs doesn't work)
     return rc.getLocation().directionTo(goal);
   }
@@ -237,24 +237,24 @@ public abstract class Robot {
           if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
             if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=1){
               map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=1;
-              impassableQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+65536);
+              impassableQueueTentative+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
             }
           }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
             Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
             if(islandTeam==Team.NEUTRAL){//neutral island
               if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=14){
                 map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=14;
-                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+65536);
+                islandQueueTentative+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
               }
             }else if (islandTeam==rc.getTeam()){//our island
               if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=15){
                 map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=15;
-                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096+65536);
+                islandQueueTentative+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096);
               }
             }else{//their island
               if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=16){
                 map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=16;
-                islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2+65536);
+                islandQueueTentative+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2);
               }
             }
           }else{ //empty squares or currents
@@ -286,7 +286,7 @@ public abstract class Robot {
         }
         if(map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]!=setMap){
           map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
-          wellQueue.push(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11)+65536);
+          wellQueueTentative+=(char)(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11));
         }
       }
     }
@@ -303,24 +303,24 @@ public abstract class Robot {
         if(!rc.sensePassability(visibleLocations[i])){ //tempests (impassable)
           if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=1){
             map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=1;
-            impassableQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
+            impassableQueue+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
           }
         }else if(rc.senseIsland(visibleLocations[i])!=-1){ //island
           Team islandTeam=rc.senseTeamOccupyingIsland(rc.senseIsland(visibleLocations[i]));
           if(islandTeam==Team.NEUTRAL){//neutral island
             if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=14){
               map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=14;
-              islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
+              islandQueue+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x);
             }
           }else if (islandTeam==rc.getTeam()){//our island
             if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=15){
               map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=15;
-              islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096);
+              islandQueue+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096);
             }
           }else{//their island
             if(map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]!=16){
               map[visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x]=16;
-              islandQueue.push(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2);
+              islandQueue+=(char)(visibleLocations[i].y*rc.getMapWidth()+visibleLocations[i].x+4096*2);
             }
           }
         }else{ //empty squares or currents
@@ -352,7 +352,7 @@ public abstract class Robot {
       }
       if(map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]!=setMap){
         map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
-        wellQueue.push(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11));
+        wellQueue+=(char)(wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x+4096*(setMap-11));
       }
     }
   }
@@ -371,7 +371,11 @@ public abstract class Robot {
       int team=(data/4096)%4;
       map[loc]=14+team;
       //removes data found in the array from the upload queue
-      islandQueue.removeFirstOccurrence(data);
+      int indexOf=islandQueueTentative.indexOf((char)data);
+      if(indexOf>0){
+        //islandQueue.removeFirstOccurrence(data);
+        islandQueueTentative=islandQueueTentative.substring(0,indexOf)+islandQueueTentative.substring(indexOf+1);
+      }
     }
     for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){ //go through every island storage slot
       data=rc.readSharedArray(i+ISLANDSTORAGELENGTH); //read shared array
@@ -382,7 +386,11 @@ public abstract class Robot {
       int loc=data%4096;  //just for safety (we should just be able to put map[data] next line)
       map[loc]=1;
       //removes data found in the array from the upload queue
-      impassableQueue.removeFirstOccurrence(data);
+      int indexOf=impassableQueueTentative.indexOf((char)data);
+      if(indexOf>0){
+        //impassableQueue.removeFirstOccurrence(data);
+        impassableQueueTentative=impassableQueueTentative.substring(0,indexOf)+impassableQueueTentative.substring(indexOf+1);
+      }
     }
     for(int i=0;i<WELLSTORAGELENGTH;++i){ //go through every island storage slot
       data=rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH); //read shared array
@@ -394,69 +402,58 @@ public abstract class Robot {
       int wellType=(data/4096)/4;
       map[loc]=11+wellType;
       //removes data found in the array from the upload queue
-      wellQueue.removeFirstOccurrence(data);
+      int indexOf=wellQueueTentative.indexOf((char)data);
+      if(indexOf>0){
+        //wellQueue.removeFirstOccurrence(data);
+        wellQueue=wellQueueTentative.substring(0,indexOf)+wellQueueTentative.substring(indexOf+1);
+      }
     }
   }
 
   //writes info from the queues to the array (if possible)
   public void writeSharedArray(RobotController rc) throws GameActionException{
     boolean decrement=false;
-    for(int i=0;i<ISLANDSTORAGELENGTH&&!islandQueue.isEmpty();++i){ //go through every island storage slot
+    boolean canWrite=rc.canWriteSharedArray(0,0);
+    for(int i=0;i<ISLANDSTORAGELENGTH;++i){ //go through every island storage slot
       if(rc.readSharedArray(i)==0){ //if there aren't any contents in the slot...
-        if(rc.canWriteSharedArray(0, 0)&&islandQueue.peek()<65536){ //check if we can write
-          rc.writeSharedArray(i,islandQueue.pop()); //we write our own contents (and remove it from the queue)
+        if(canWrite&&!islandQueue.isEmpty()){ //check if we can write
+          rc.writeSharedArray(i,(int)(islandQueue.charAt(0))); //we write our own contents
+          islandQueue=islandQueue.substring(1); //and remove it from the queue
         }
         decrement=true;
       }
     }
-    if(decrement){decrementIslandQueue();}
+    if(decrement){
+      islandQueue+=islandQueueTentative;
+      islandQueueTentative="";
+    }
     decrement=false;
-    for(int i=0;i<IMPASSABLESTORAGELENGTH&&!impassableQueue.isEmpty();++i){ //go through every impassable storage slot
+    for(int i=0;i<IMPASSABLESTORAGELENGTH;++i){ //go through every impassable storage slot
       if(rc.readSharedArray(i+ISLANDSTORAGELENGTH)==0){ //if there aren't any contents in the slot...
-        if(rc.canWriteSharedArray(0,0)&&impassableQueue.peek()<65536){ //check if we can write
-          rc.writeSharedArray(i+ISLANDSTORAGELENGTH,impassableQueue.pop()); //we write our own contents (and remove it from the queue)
+        if(canWrite&&!impassableQueue.isEmpty()){ //check if we can write
+          rc.writeSharedArray(i+ISLANDSTORAGELENGTH,(int)(impassableQueue.charAt(0))); //we write our own contents
+          impassableQueue=impassableQueue.substring(1); //(and remove it from the queue)
         }
         decrement=true;
       }
     }
-    if(decrement){decrementImpassableQueue();}
+    if(decrement){
+      impassableQueue+=impassableQueueTentative;
+      impassableQueueTentative="";
+    }
     decrement=false;
-    for(int i=0;i<WELLSTORAGELENGTH&&!wellQueue.isEmpty();++i){ //go through every well storage slot
+    for(int i=0;i<WELLSTORAGELENGTH;++i){ //go through every well storage slot
       if(rc.readSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH)==0){ //if there aren't any contents in the slot...
-        if(rc.canWriteSharedArray(0,0)&&wellQueue.peek()<65536){ //check if we can write
-          rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,wellQueue.pop()); //we write our own contents (and remove it from the queue)
+        if(canWrite&&!wellQueue.isEmpty()){ //check if we can write
+          rc.writeSharedArray(i+ISLANDSTORAGELENGTH+IMPASSABLESTORAGELENGTH,(int)(wellQueue.charAt(0))); //we write our own contents
+          wellQueue=wellQueue.substring(1); //(and remove it from the queue)
         }
         decrement=true;
       }
     }
-    if(decrement){decrementWellQueue();}
-  }
-
-  private void decrementIslandQueue(){
-    ListIterator<Integer> iter=islandQueue.listIterator();
-    while(iter.hasNext()){
-      int iterValue=iter.next().intValue();
-      if(iterValue>=65536){
-        iter.set(iterValue-65536);
-      }
-    }
-  }
-  private void decrementImpassableQueue(){
-    ListIterator<Integer> iter=impassableQueue.listIterator();
-    while(iter.hasNext()){
-      int iterValue=iter.next().intValue();
-      if(iterValue>=65536){
-        iter.set(iterValue-65536);
-      }
-    }
-  }
-  private void decrementWellQueue(){
-    ListIterator<Integer> iter=wellQueue.listIterator();
-    while(iter.hasNext()){
-      int iterValue=iter.next().intValue();
-      if(iterValue>=65536){
-        iter.set(iterValue-65536);
-      }
+    if(decrement){
+      wellQueue+=wellQueueTentative;
+      wellQueueTentative="";
     }
   }
 
