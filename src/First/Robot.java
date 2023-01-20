@@ -51,14 +51,15 @@ public abstract class Robot {
   
   protected RobotInfo hqInfo;
   static final Direction[] directions = {
+    Direction.SOUTHWEST,
+    Direction.SOUTH,
+    Direction.SOUTHEAST,
+    Direction.WEST,
+    Direction.CENTER,
+    Direction.EAST,
+    Direction.NORTHWEST,
     Direction.NORTH,
     Direction.NORTHEAST,
-    Direction.EAST,
-    Direction.SOUTHEAST,
-    Direction.SOUTH,
-    Direction.SOUTHWEST,
-    Direction.WEST,
-    Direction.NORTHWEST,
   };
   protected static Random rng;
   public Robot(RobotController rc) throws GameActionException{
@@ -82,7 +83,34 @@ public abstract class Robot {
 
   // Every subclass must define their own run function.
   public abstract void run(RobotController rc) throws GameActionException;
-
+/*
+  These aren't actually useful, but its nice to have them as reference
+  public int mapLocationToInt(MapLocation m){
+    return m.y*mapWidth+m.x;
+  }
+  public char mapLocationToChar(MapLocation m){
+    return (char)(m.y*mapWidth+m.x);
+  }
+  public MapLocation intToMapLocation(int i){
+    return new MapLocation(i%mapWidth,i/mapWidth);
+  }
+  public MapLocation charToMapLocation(char c){
+    return new MapLocation(((int)c)%mapWidth,((int)c)/mapWidth);
+  }
+  public int intPlusDirection(int m,Direction d){
+    return m+mapWidth*d.dy+d.dx;
+  }
+  public char charPlusDirection(char m,Direction d){
+    return (char)((int)m+mapWidth*d.dy+d.dx);
+  }
+  //see the directions array for the order
+  public int directionToInt(Direction d){
+    return 3*(d.dy+1)+d.dx+1;
+  }
+  public char directionToChar(Direction d){
+    return (char)(3*(d.dy+1)+d.dx+1);
+  }
+  */
   public Direction makeDir(int dx, int dy) {
     if (dx == -1) {
       if (dy == -1)   { return Direction.SOUTHWEST; }
@@ -113,44 +141,48 @@ public abstract class Robot {
   //dfs
   public Direction pathfind(RobotController rc, MapLocation goal) throws GameActionException{
     if(goal.equals(rc.getLocation())){return Direction.CENTER;}
+    //rc.setIndicatorString("DFS to "+goal);
     int bytecodeBefore=Clock.getBytecodeNum();
-    LinkedList<MapLocation> stack=new LinkedList<MapLocation>();
+    //stack starts with the goal
+    String stack=""+(char)(goal.y*rc.getMapWidth()+goal.x);
     boolean[] discovered=new boolean[rc.getMapHeight()*rc.getMapWidth()];
-    stack.push(goal);
-    while(!stack.isEmpty()){  //while loop that runs dfs
-      rc.setIndicatorDot(stack.peek(),100,0,0);
-      MapLocation m=stack.pop();
-      if(!discovered[m.y*rc.getMapWidth()+m.x]){
-        discovered[m.y*rc.getMapWidth()+m.x]=true;
-        Direction dirToGoal=rc.getLocation().directionTo(m);
+    while(!stack.isEmpty()&&Clock.getBytecodesLeft()>2000){  //while loop that runs dfs
+      int c=(int)(stack.charAt(0));
+      stack=stack.substring(1);
+      if(!discovered[c]){
+        //rc.setIndicatorDot(new MapLocation(c%rc.getMapWidth(),c/rc.getMapWidth()),Clock.getBytecodeNum()/50,0,0);
+        discovered[c]=true;
+        Direction dirToGoal=(new MapLocation(c%rc.getMapWidth(),c/rc.getMapWidth())).directionTo(rc.getLocation());
+        //System.out.println("")
         Direction[] pushOrder={//this is the priority order that we add stuff to the dfs queue
-          dirToGoal,
-          dirToGoal.rotateRight(),
-          dirToGoal.rotateLeft(),
-          dirToGoal.rotateRight().rotateRight(),
-          dirToGoal.rotateLeft().rotateLeft(),
-          dirToGoal.rotateRight().rotateRight().rotateRight(),
-          dirToGoal.rotateLeft().rotateLeft().rotateLeft(),
           dirToGoal.opposite(),
-
+          dirToGoal.rotateLeft().rotateLeft().rotateLeft(),
+          dirToGoal.rotateRight().rotateRight().rotateRight(),
+          dirToGoal.rotateLeft().rotateLeft(),
+          dirToGoal.rotateRight().rotateRight(),
+          dirToGoal.rotateLeft(),
+          dirToGoal.rotateRight(),
+          dirToGoal
         };
-        int before=0;
-        for(int i=0;i<8;++i){//go through the priority order
-          MapLocation toPush=m.add(pushOrder[i]);
-          int locVal=toPush.y*rc.getMapWidth()+toPush.x;
-          if(rc.onTheMap(toPush)&&map[locVal]!=1&&!discovered[locVal]){
-            //inbounds, passable, and not yet discovered by dfs
-            if(toPush.equals(rc.getLocation())){ //break if you find the destination
+        //bytecodeBefore=Clock.getBytecodeNum();
+        for(int i=0;i<8;++i){//go through the priority order, 52 bytecode total
+          int toPush=c+rc.getMapWidth()*pushOrder[i].dy+pushOrder[i].dx;  //16 bytecode
+          //note that by removing "onesDigit", many locations out of bounds in the x direction map to spots on the map. Hopefully this won't fuck everything up.
+          //int onesDigit=c%mapWidth+pushOrder[i].dx; //11 bytecode
+          if(toPush>0&&toPush<(rc.getMapWidth()*rc.getMapHeight())&&map[toPush]!=1/*&&onesDigit>0&&onesDigit<10*/){  //16 bytecode (used to be 21)
+            //inbounds and passable
+            if(toPush==rc.getLocation().y*rc.getMapWidth()+rc.getLocation().x){ //13 bytecode
               rc.setIndicatorString("DFS to "+goal+" success, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
+              //Direction[] toReturn={pushOrder[i].opposite(),directions[(int)path]};
               return pushOrder[i].opposite();
             }
-            stack.push(m.add(pushOrder[i])); //and add them all to the stack
-            rc.setIndicatorDot(m.add(pushOrder[i]),0,100,0);
+            stack=(char)toPush+stack; //10 bytecode
+            //old: stack2+=directionToChar(pushOrder[i]);  //24 bytecode for the pushes
           }
         }
         //rc.setIndicatorString("for bytecode: "+(Clock.getBytecodeNum()-bytecodeBefore));
       }
-      bytecodeBefore=Clock.getBytecodeNum();
+      //bytecodeBefore=Clock.getBytecodeNum();
     }
     rc.setIndicatorString("DFS to "+goal+" failed, bytecode used: "+(Clock.getBytecodeNum()-bytecodeBefore));
     //backup (in case dfs doesn't work)
