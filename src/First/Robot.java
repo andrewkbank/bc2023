@@ -263,6 +263,7 @@ public abstract class Robot {
             Direction current=currentInfo.getCurrentDirection();
             //switch-case every direction
             switch(current){
+              case CENTER: setMap=2; break;
               case NORTH: setMap=3; break;
               case NORTHEAST: setMap=4; break;
               case EAST: setMap=5; break;
@@ -283,6 +284,7 @@ public abstract class Robot {
           case ADAMANTIUM: setMap=11; break;
           case MANA: setMap=12; break;
           case ELIXIR: setMap=13; break;
+          case NO_RESOURCE: setMap=2; break;
         }
         if(map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]!=setMap){
           map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
@@ -329,6 +331,7 @@ public abstract class Robot {
           Direction current=currentInfo.getCurrentDirection();
           //switch-case every direction
           switch(current){
+            case CENTER: setMap=2; break;
             case NORTH: setMap=3; break;
             case NORTHEAST: setMap=4; break;
             case EAST: setMap=5; break;
@@ -349,6 +352,7 @@ public abstract class Robot {
         case ADAMANTIUM: setMap=11; break;
         case MANA: setMap=12; break;
         case ELIXIR: setMap=13; break;
+        case NO_RESOURCE: setMap=2; break;
       }
       if(map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]!=setMap){
         map[wellsInRange[i].getMapLocation().y*rc.getMapWidth()+wellsInRange[i].getMapLocation().x]=setMap;
@@ -372,7 +376,7 @@ public abstract class Robot {
       map[loc]=14+team;
       //removes data found in the array from the upload queue
       int indexOf=islandQueueTentative.indexOf((char)data);
-      if(indexOf>0){
+      if(indexOf>=0){
         //islandQueue.removeFirstOccurrence(data);
         islandQueueTentative=islandQueueTentative.substring(0,indexOf)+islandQueueTentative.substring(indexOf+1);
       }
@@ -387,7 +391,7 @@ public abstract class Robot {
       map[loc]=1;
       //removes data found in the array from the upload queue
       int indexOf=impassableQueueTentative.indexOf((char)data);
-      if(indexOf>0){
+      if(indexOf>=0){
         //impassableQueue.removeFirstOccurrence(data);
         impassableQueueTentative=impassableQueueTentative.substring(0,indexOf)+impassableQueueTentative.substring(indexOf+1);
       }
@@ -403,7 +407,7 @@ public abstract class Robot {
       map[loc]=11+wellType;
       //removes data found in the array from the upload queue
       int indexOf=wellQueueTentative.indexOf((char)data);
-      if(indexOf>0){
+      if(indexOf>=0){
         //wellQueue.removeFirstOccurrence(data);
         wellQueue=wellQueueTentative.substring(0,indexOf)+wellQueueTentative.substring(indexOf+1);
       }
